@@ -11,6 +11,7 @@ from greenlet import GreenletExit
 from pygame import Surface, SurfaceType
 
 logger = logging.getLogger("pixelframe")
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Pixel(object):
@@ -38,7 +39,7 @@ class Queue:
     queue: deque
 
     def __init__(self):
-        self.queue = deque(maxlen=1000)
+        self.queue = deque()
 
     def add(self, pixel: Pixel):
         self.queue.append(pixel)
@@ -72,6 +73,7 @@ class Canvas(object):
 
     def stop(self):
         self.kill = True
+        pygame.quit()
 
     def get_pixel(self, x, y):
         return self.screen.get_at((x, y))
@@ -122,7 +124,7 @@ class Canvas(object):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.trigger("stop")
-                    break
+                    return
                 elif event.type == pygame.KEYDOWN:
                     self.trigger("KEYDOWN-" + event.unicode)
 
@@ -143,7 +145,6 @@ class Canvas(object):
 
         def decorator(func):
             self.events[name] = func
-            logger.info("fired: %s", name)
             return func
 
         return decorator
@@ -202,7 +203,7 @@ class Client:
             readline = self.socket.makefile().readline
 
         try:
-            line = ""
+            """line = ""
             while not self.kill:
                 c = readline(1)
                 if "\n" == c or not c:
@@ -230,7 +231,17 @@ class Client:
                 if not self.canvas.trigger(
                     "COMMAND-%s" % command.upper(), self, *arguments
                 ):
-                    self.send("Wrong arguments")
+                    self.send("Wrong arguments")"""
+            while self.socket:
+                gsleep(10.0 / self.pps)
+                for i in range(10):
+                    line = readline(1024).strip()
+                    if not line:
+                        break
+                    arguments = line.split()
+                    command = arguments.pop(0)
+                    if not self.canvas.trigger('COMMAND-%s' % command.upper(), self, *arguments):
+                        self.disconnect()
         finally:
             self.disconnect()
 
@@ -362,6 +373,11 @@ def register_events(canvas: Canvas):
     logger.info("Successfully registered Events")
 
 
+def maintainer(canvas: Canvas, client: Client):
+    while canvas.is_alive():
+        pass
+
+
 def main():
     global pixelcount
     pixelcount = 0
@@ -382,9 +398,11 @@ def main():
     try:
         while canvas.is_alive():
             pass
+        print("eixt")
     except KeyboardInterrupt:
         print("Exitting...")
     main_loop.kill()
+    server_loop.kill()
 
 
 if __name__ == "__main__":
