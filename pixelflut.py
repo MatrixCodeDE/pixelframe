@@ -2,19 +2,21 @@ import logging
 import time
 from collections import deque
 
+from typing import Callable, Any
 import pygame
 from gevent import spawn
-from gevent._socket3 import socket
+from gevent._socket3 import socket as socket3
 from gevent.lock import RLock
 from gevent.time import sleep as gsleep
 from greenlet import GreenletExit
-from pygame import Surface, SurfaceType
+from pygame import Surface, SurfaceType, Color
 
 logger = logging.getLogger("pixelframe")
 logging.basicConfig(level=logging.DEBUG)
 
 
 class Pixel(object):
+    """An object for storing pixel with easy and clear structure"""
     x: int
     y: int
     r: int
@@ -36,18 +38,42 @@ class Pixel(object):
 
 
 class Queue:
+    """The queue for pixels to set at the canvas"""
     queue: deque
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Initializes the queue with a deque
+        """
         self.queue = deque()
 
-    def add(self, pixel: Pixel):
+    def add(self, pixel: Pixel) -> None:
+        """
+        Adds a pixel to the queue
+        Args:
+            pixel (Pixel): A Pixel object
+
+        Returns:
+            None
+        """
         self.queue.append(pixel)
 
     def __iter__(self):
+        """
+        Used for iterating through the queue
+        Returns:
+            queue: The iterator object
+        """
         return self
 
     def __next__(self):
+        """
+        Gives back the next element in the queue
+        Returns:
+            The next Pixel in the queue
+        Raises:
+            StopIteration: If the queue is empty/completed
+        """
         if len(self.queue) > 0:
             return self.queue.popleft()
         else:
@@ -55,15 +81,29 @@ class Queue:
 
 
 class Canvas(object):
+    """
+    The canvas object
+    Attributes:
+        size (tuple[int, int]): The size of the canvas
+        flags (int): Flags for pygame
+        screen (Surface | SurfaceType): The pygame screen
+        fps (int): The framerate for visual updates
+        kill (bool): The attribute that stops/kills all running processes of the class
+        tasks (Queue): The queue of Pixels
+        events (dict[str, Callable]): The registered events (usually fired by the Server)
+    """
     size: tuple[int, int] = 500, 500
     flags: int = pygame.SCALED | pygame.RESIZABLE
     screen: Surface | SurfaceType
-    fps = 30
+    fps: int = 30
     kill: bool = False
     tasks: Queue
-    events: dict
+    events: dict[str, Callable]
 
     def __init__(self):
+        """
+        Initializes the canvas
+        """
         pygame.init()
         pygame.mixer.quit()
         pygame.display.set_caption("PixelFrame")
@@ -72,16 +112,51 @@ class Canvas(object):
         self.events = {}
 
     def stop(self):
+        """
+        Acts as a kind of 'killswitch' function
+        Returns:
+            None
+        """
         self.kill = True
         pygame.quit()
 
-    def get_pixel(self, x, y):
+    def get_pixel(self, x: int, y: int) -> Color:
+        """
+        Gets a single pixel from the canvas
+        Args:
+            x (int): Coordinate x
+            y (int): Coordinate y
+
+        Returns:
+            Color
+        """
         return self.screen.get_at((x, y))
 
-    def add_pixel(self, x: int, y: int, r: int, g: int, b: int, a: int = 255):
+    def add_pixel(self, x: int, y: int, r: int, g: int, b: int, a: int = 255) -> None:
+        """
+        Adds a single pixel to the queue
+        Args:
+            x (int): Position x
+            y (int): Position y
+            r (int): Value Red
+            g (int): Value Green
+            b (int): Value Blue
+            a (int): Value Alpha
+
+        Returns:
+            None
+        """
         self.tasks.add(Pixel(x, y, r, g, b, a))
 
     def put_pixel(self, pixel: Pixel):
+        """
+        Puts a single pixel on the canvas
+        Args:
+            pixel (Pixel): A pixel (usually from the queue)
+
+        Returns:
+            None
+        """
         coords, color = pixel.get()
         x, y = coords
         r, g, b, a = color
@@ -98,7 +173,12 @@ class Canvas(object):
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
             self.screen.set_at((x, y), (r, g, b))
 
-    def get_pixel_color_count(self):
+    def get_pixel_color_count(self) -> dict[str, int]:
+        """
+        Gets a pixel count from the canvas
+        Returns:
+            A dict with the pixel count
+        """
         c = {}
         for x in range(1, self.width):
             for y in range(1, self.height):
@@ -112,10 +192,18 @@ class Canvas(object):
                     c[cString] = 1
         return c
 
-    def get_size(self):
+    def get_size(self) -> tuple[int, int]:
+        """
+        Gets the size of the canvas
+        Returns:
+            A tuple with the size
+        """
         return self.size
 
-    def loop(self):
+    def loop(self) -> None:
+        """
+        The loop for controlling the canvas
+        """
         updates = 1.0 / self.fps
         flip = pygame.display.flip
 
@@ -135,22 +223,51 @@ class Canvas(object):
             gsleep(max(updates - end, 0))
 
     def render(self):
+        """
+        Fired by the canvas loop to render queued Pixels
+        Returns:
+            None
+        """
         for pixel in self.tasks:
             self.put_pixel(pixel)
 
-    def register(self, name):
-        """Register a new event"""
+    def register(self, name: str) -> Any:
+        """
+        Registers a new event for the canvas
+        Args:
+            name (str): the name for fire the event
+
+        Returns:
+            The decorator
+        """
 
         logger.info("Registered event: " + name)
 
-        def decorator(func):
+        def decorator(func: Callable) -> Any:
+            """
+            The decorator for registering events
+            Args:
+                func (Callable): The function that should be fired
+
+            Returns:
+                The function
+            """
             self.events[name] = func
             return func
 
         return decorator
 
-    def trigger(self, name, *args, **kwargs):
-        """Trigger an existing event"""
+    def trigger(self, name: str, *args, **kwargs) -> None:
+        """
+        Fires an existing event
+        Args:
+            name (str): The name of the event
+            *args: Variable length argument list
+            **kwargs: Arbitrary keyword arguments
+
+        Returns:
+            None
+        """
         if name in self.events:
             try:
                 self.events[name](self, *args, **kwargs)
@@ -160,42 +277,97 @@ class Canvas(object):
             except:
                 logger.exception("Error in callback for %r", name)
 
-    def is_alive(self):
+    def is_alive(self) -> bool:
+        """
+        Gets of the canvas is still alive/rendering
+        Returns:
+            If the process is alive
+        """
         return not self.kill
 
 
 class Client:
-    pps = 0.2  # Pixel per Second
+    """
+    The client object (used for the server)
+    Attributes:
+        pps (int): The number of pixels per second a user can set
+        ip (str): The IP address of the client
+        canvas (Canvas): The canvas object
+        socket (socket): The socket the client is connected to
+        connected (bool): Whether the client is currently connected to the server
+        connected_at (float): The unix time the client has connected
+        cooldown (float): The cooldown for each pixel (calculated by the pps)
+        cooldown_until(float): The unix time when the client can place the next pixel
+        lock (RLock): The locking primative to identify the Greenlet
+        kill (bool): The attribute that stops/kills all running processes of the class
 
+    """
+    pps: int | float = 10  # Pixel per Second
     ip: str
+    port: int
     canvas: Canvas
-    socket: socket | None
+    socket: socket3 | None
+    connected: bool = False
     connected_at: float
-    cooldown = 1.0 / pps
+    cooldown: float = 1.0 / pps
     cooldown_until: float
     lock: RLock
     kill: bool = False
 
-    def __init__(self, canvas, ip):
+    def __init__(self, canvas: Canvas, ip: str, port: int) -> None:
+        """
+        Initializes the client object
+        Args:
+            canvas (Canvas): The canvas
+            ip (str): The IP address of the client
+            port (int): The port of the client
+        """
         self.canvas = canvas
         self.ip = ip
+        self.port = port
         self.socket = None
         self.connected_at = time.time()
         self.cooldown_until = 0
         self.lock = RLock()
 
-    def stop(self):
+    def stop(self) -> None:
+        """
+        Acts as a kind of 'killswitch' function
+        Returns:
+            None
+        """
         self.kill = True
 
-    def send(self, line):
+    def send(self, line: str) -> None:
+        """
+        Sends a line to the client socket
+        Args:
+            line (str): The line to send
+
+        Returns:
+            None
+        """
         with self.lock:
             if self.socket:
                 self.socket.sendall((line + "\n").encode())
 
-    def nospam(self, line):
+    def nospam(self, line: str) -> None:
+        """
+        Sends a nospam line to the client socket
+        Args:
+            line (str): The line to send
+
+        Returns:
+            None
+        """
         self.send(line)
 
-    def connect(self, socket):
+    def connect(self, socket: socket3) -> None:
+        """
+        The 'loop' for handling the client connection
+        Args:
+            socket (socket): the socket of the client
+        """
         self.socket = socket
 
         with self.lock:
@@ -203,35 +375,6 @@ class Client:
             readline = self.socket.makefile().readline
 
         try:
-            """line = ""
-            while not self.kill:
-                c = readline(1)
-                if "\n" == c or not c:
-                    break
-                line += c
-            if not line:
-                raise
-            arguments = line.split()
-            command = arguments.pop(0)
-
-            if command == "PX" and len(arguments) != 2:
-                now = time.time()
-                cd = self.cooldown_until - now
-                if cd < 0:
-                    if not self.canvas.trigger(
-                        "COMMAND-%s" % command.upper(), self, *arguments
-                    ):
-                        self.send("Wrong arguments")
-
-                else:
-                    self.nospam(f"You are on cooldown for {cd} seconds")
-                    gsleep(cd)
-
-            else:
-                if not self.canvas.trigger(
-                    "COMMAND-%s" % command.upper(), self, *arguments
-                ):
-                    self.send("Wrong arguments")"""
             while self.socket and not self.kill:
                 line = ""
                 while not self.kill:
@@ -269,7 +412,12 @@ class Client:
         finally:
             self.disconnect()
 
-    def disconnect(self):
+    def disconnect(self) -> None:
+        """
+        Disconnects the client and closes the socket
+        Returns:
+            None
+        """
         with self.lock:
             if self.socket:
                 socket = self.socket
@@ -278,26 +426,54 @@ class Client:
 
 
 class Server(object):
+    """
+    The socketserver for handling client sockets
+    Attributes:
+        canvas (Canvas): The canvas object
+        host (str): The host address of the server
+        port (int): The port of the server
+        socket(socket): The socket server
+        clients (dict[str, Client]): The list of clients
+        kill (bool): The attribute that stops/kills all running processes of the class
+    """
     canvas: Canvas
     host: str
     port: int
-    socket: socket
-    clients: dict
+    socket: socket3
+    clients: dict[str, Client]
     kill: bool = False
 
-    def __init__(self, canvas, host, port):
+    def __init__(self, canvas: Canvas, host: str, port: int) -> None:
+        """
+        Initializes the server
+        Args:
+            canvas (Canvas): The canvas object
+            host (str): The host address of the server
+            port (int): The port of the serve
+        """
         self.canvas = canvas
         self.host = host
         self.port = port
-        self.socket = socket()
+        self.socket = socket3()
         self.socket.bind((self.host, self.port))
         self.socket.listen()
         self.clients = {}
 
-    def stop(self):
+    def stop(self) -> None:
+        """
+        Acts as a kind of 'killswitch' function
+        Returns:
+            None
+        """
+        for client in self.clients.values():
+            client.stop()
+            del self.clients[client.ip]
         self.kill = True
 
     def loop(self):
+        """
+        The loop for handling the client connections
+        """
         while not self.kill:
             sock, addr = self.socket.accept()
             ip, port = addr
@@ -307,13 +483,20 @@ class Server(object):
                 client.disconnect()
                 client.task.kill()
             else:
-                client = self.clients[ip] = Client(self.canvas, ip)
+                client = self.clients[ip] = Client(self.canvas, ip, port)
 
             client.task = spawn(client.connect, sock)
 
 
-def register_events(canvas: Canvas):
-    """Register all events"""
+def register_events(canvas: Canvas) -> None:
+    """
+    Registers the needed events for the server
+    Args:
+        canvas (Canvas): The canvas object
+
+    Returns:
+        None
+    """
 
     logger.info("Registering events")
 
@@ -397,12 +580,10 @@ def register_events(canvas: Canvas):
     logger.info("Successfully registered Events")
 
 
-def maintainer(canvas: Canvas, client: Client):
-    while canvas.is_alive():
-        pass
-
-
 def main():
+    """
+    The main function of PixelFrame
+    """
     global pixelcount
     pixelcount = 0
     canvas = Canvas()
@@ -422,6 +603,8 @@ def main():
         server_loop.join()
     except KeyboardInterrupt:
         print("Exitting...")
+    canvas.stop()
+    server.stop()
     main_loop.kill()
     server_loop.kill()
 
