@@ -165,13 +165,13 @@ class Canvas(object):
 
 
 class Client:
-    pps = 10  # Pixel per Second
+    pps = 0.2  # Pixel per Second
 
     ip: str
     canvas: Canvas
     socket: socket | None
     connected_at: float
-    cooldown: 1.0 / pps
+    cooldown = 1.0 / pps
     cooldown_until: float
     lock: RLock
     kill: bool = False
@@ -232,16 +232,40 @@ class Client:
                     "COMMAND-%s" % command.upper(), self, *arguments
                 ):
                     self.send("Wrong arguments")"""
-            while self.socket:
-                gsleep(10.0 / self.pps)
-                for i in range(10):
+            while self.socket and not self.kill:
+                line = ""
+                while not self.kill:
                     line = readline(1024).strip()
                     if not line:
-                        break
-                    arguments = line.split()
-                    command = arguments.pop(0)
-                    if not self.canvas.trigger('COMMAND-%s' % command.upper(), self, *arguments):
                         self.disconnect()
+                    break
+                arguments = line.split()
+                if not arguments:
+                    self.disconnect()
+                    break
+                command = arguments.pop(0)
+
+                if command == "PX" and len(arguments) != 2:
+                    now = time.time()
+                    cd = self.cooldown_until - now
+                    if cd < 0:
+                        if not self.canvas.trigger(
+                                "COMMAND-%s" % command.upper(), self, *arguments
+                        ):
+                            self.send("Wrong arguments")
+                        self.cooldown_until = now + self.cooldown
+
+                    else:
+                        if cd >= 1.0:
+                            self.nospam(f"You are on cooldown for {cd:.2f} seconds")
+                        else:
+                            self.nospam(f"You are on cooldown for {cd*1000:.2f} milliseconds")
+
+                else:
+                    if not self.canvas.trigger(
+                            "COMMAND-%s" % command.upper(), self, *arguments
+                    ):
+                        self.send("Wrong arguments")
         finally:
             self.disconnect()
 
@@ -393,12 +417,9 @@ def main():
 
     logger.info(f"Starting Server at {server.host}:{server.port}")
     server_loop = spawn(server.loop)
-    server_loop.join()
 
     try:
-        while canvas.is_alive():
-            pass
-        print("eixt")
+        server_loop.join()
     except KeyboardInterrupt:
         print("Exitting...")
     main_loop.kill()
