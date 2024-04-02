@@ -6,15 +6,13 @@ I created this on one afternoon, so most of the code is very sketchy and copied 
 
 ## Usage: The Pixelflut Protocol
 
-Pixelflut defines four main commands that are always supported to get you started:
+PixelFrame uses the base of the Pixelflut Protocol for it's commands. Therefore the basic commands are the same:
 
 * `HELP`: Returns a short introductional help text.
 * `SIZE`: Returns the size of the visible canvas in pixel as `SIZE <w> <h>`.
 * `PX <x> <y>` Return the current color of a pixel as `PX <x> <y> <rrggbb>`.
 * `PX <x> <y> <rrggbb(aa)>`: Draw a single pixel at position (x, y) with the specified hex color code.
   If the color code contains an alpha channel value, it is blended with the current color of the pixel.
-
-You can send multiple commands over the same connection by terminating each command with a single newline character (`\n`).
 
 Example:
 
@@ -24,8 +22,7 @@ Example:
     $ echo "PX 32 42" | nc pixelflut.example.com 1234
     PX 23 42 ff8000
 
-Implementations MAY support additional commands or have less strict parsing rules (e.g. allow `\r\n` or any whitespace between parameters) but they MUST support the commands above.
-
+Anyway, due to a rewrite of the connection handler with a specific timeout, multiple commands seperated by `\n` are **not** supported. But the server will answer to invalid commands, even if you are on timeout.
 
 ## Server
 ### Installation
