@@ -2,7 +2,7 @@ import logging
 import time
 from collections import deque
 
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 import pygame
 from gevent import spawn
 from gevent._socket3 import socket as socket3
@@ -91,6 +91,7 @@ class Canvas(object):
         kill (bool): The attribute that stops/kills all running processes of the class
         tasks (Queue): The queue of Pixels
         events (dict[str, Callable]): The registered events (usually fired by the Server)
+        stats (bool): Turns on/off the statistics on top of the canvas
     """
     size: tuple[int, int] = 500, 500
     flags: int = pygame.SCALED | pygame.RESIZABLE
@@ -99,17 +100,31 @@ class Canvas(object):
     kill: bool = False
     tasks: Queue
     events: dict[str, Callable]
+    stats_size: tuple[int, int]
+    server: Optional["Server"] | None
+    pixelcount: int
 
-    def __init__(self):
+    def __init__(self, size: tuple[int, int] = None, stats_size: tuple[int, int] = None):
         """
         Initializes the canvas
         """
         pygame.init()
         pygame.mixer.quit()
         pygame.display.set_caption("PixelFrame")
+        pygame.font.init()
+        if size:
+            self.size = size
+        if not stats_size:
+            self.stats_size = 0, 0
+        else:
+            if stats_size[0] < 0 or stats_size[1] < 0:
+                raise Exception("Invalid stats size")
+        self.stats_size = stats_size
         self.screen = pygame.display.set_mode(self.size, self.flags)
         self.tasks = Queue()
         self.events = {}
+        self.server = None
+        self.pixelcount = 0
 
     def stop(self):
         """
@@ -119,6 +134,9 @@ class Canvas(object):
         """
         self.kill = True
         pygame.quit()
+
+    def set_server(self, server: Optional["Server"]):
+        self.server = server
 
     def get_pixel(self, x: int, y: int) -> Color:
         """
@@ -130,7 +148,7 @@ class Canvas(object):
         Returns:
             Color
         """
-        return self.screen.get_at((x, y))
+        return self.screen.get_at(self.translate_position(x, y))
 
     def add_pixel(self, x: int, y: int, r: int, g: int, b: int, a: int = 255) -> None:
         """
@@ -146,6 +164,7 @@ class Canvas(object):
         Returns:
             None
         """
+        x, y = self.translate_position(x, y)
         self.tasks.add(Pixel(x, y, r, g, b, a))
 
     def put_pixel(self, pixel: Pixel):
@@ -172,6 +191,7 @@ class Canvas(object):
             g = (g2 * (0xFF - a) + (g * a)) / 0xFF
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
             self.screen.set_at((x, y), (r, g, b))
+        self.pixelcount += 1
 
     def get_pixel_color_count(self) -> dict[str, int]:
         """
@@ -180,10 +200,10 @@ class Canvas(object):
             A dict with the pixel count
         """
         c = {}
-        for x in range(1, self.width):
-            for y in range(1, self.height):
+        for x in range(1, self.size[0]):
+            for y in range(1, self.size[1]):
                 r, g, b, a = self.get_pixel(x, y)
-                if r == g == b:
+                if r == g == b == 0:
                     continue
                 cString = "#%02x%02x%02x / %d,%d,%d" % (r, g, b, r, g, b)
                 if cString in c:
@@ -198,7 +218,10 @@ class Canvas(object):
         Returns:
             A tuple with the size
         """
-        return self.size
+        if not self.stats:
+            return self.size
+        else:
+            return self.size[0], self.size[1] - 40
 
     def loop(self) -> None:
         """
@@ -230,6 +253,26 @@ class Canvas(object):
         """
         for pixel in self.tasks:
             self.put_pixel(pixel)
+        if self.stats_size[0] > 0:
+            self.render_stats()
+
+    def render_stats(self):
+        if not self.server:
+            return
+        users: int = self.server.user_count()
+        pixel: int = self.pixelcount
+
+        text: str = f"Host: {self.server.host} | Port: {self.server.port} | Users: {users} | Pixels: {pixel}"
+        font = pygame.font.SysFont("monospace", self.stats_size[1])
+        rendertext = font.render(text, True, (255, 255, 255))
+        pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, self.size[0], self.stats_size[0]))
+        tsx, tsy = font.size(text)
+        self.screen.blit(rendertext, (self.size[0]/2 - tsx/2, self.stats_size[0]/2 - tsy/2))
+
+    def translate_position(self, x: int, y: int) -> tuple[int, int]:
+        if self.stats_size[0] == 0:
+            return x, y
+        return x, y + self.stats_size[0]
 
     def register(self, name: str) -> Any:
         """
@@ -369,6 +412,7 @@ class Client:
             socket (socket): the socket of the client
         """
         self.socket = socket
+        self.connected = True
 
         with self.lock:
             self.socket = socket
@@ -423,6 +467,7 @@ class Client:
                 socket = self.socket
                 self.socket = None
                 socket.close()
+                self.connected = False
 
 
 class Server(object):
@@ -487,6 +532,10 @@ class Server(object):
 
             client.task = spawn(client.connect, sock)
 
+    def user_count(self):
+        connected = [client for client in self.clients.values() if client.connected]
+        return len(connected)
+
 
 def register_events(canvas: Canvas) -> None:
     """
@@ -510,8 +559,6 @@ def register_events(canvas: Canvas) -> None:
 
     @canvas.register("COMMAND-PX")
     def add_pixel(canvas: Canvas, client: Client, x, y, color=None):
-        global pixelcount
-        pixelcount += 1
         x, y = int(x), int(y)
         if color:
             c = int(color, 16)
@@ -584,9 +631,7 @@ def main():
     """
     The main function of PixelFrame
     """
-    global pixelcount
-    pixelcount = 0
-    canvas = Canvas()
+    canvas = Canvas((1920, 1080), (40, 30))
 
     register_events(canvas)
 
@@ -595,6 +640,7 @@ def main():
     main_loop.start()
 
     server = Server(canvas, "0.0.0.0", 1234)
+    canvas.set_server(server)
 
     logger.info(f"Starting Server at {server.host}:{server.port}")
     server_loop = spawn(server.loop)
