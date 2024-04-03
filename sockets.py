@@ -5,6 +5,7 @@ from gevent._socket3 import socket as socket3
 from gevent.lock import RLock
 
 from canvas import Canvas
+from utils import logger
 
 
 class Client:
@@ -23,7 +24,7 @@ class Client:
         kill (bool): The attribute that stops/kills all running processes of the class
 
     """
-    pps: int | float = 10  # Pixel per Second
+    pps: int | float = 30  # Pixel per Second
     ip: str
     port: int
     canvas: Canvas
@@ -70,7 +71,10 @@ class Client:
         """
         with self.lock:
             if self.socket:
-                self.socket.sendall((line + "\n").encode())
+                try:
+                    self.socket.sendall((line + "\n").encode())
+                except BrokenPipeError:
+                    pass
 
     def nospam(self, line: str) -> None:
         """
@@ -90,7 +94,10 @@ class Client:
             socket (socket): the socket of the client
         """
         self.socket = socket
+        self.socket.settimeout(10)
         self.connected = True
+
+        logger.info(f"Client connected: {self.ip}:{self.port}")
 
         with self.lock:
             self.socket = socket
@@ -100,7 +107,11 @@ class Client:
             while self.socket and not self.kill:
                 line = ""
                 while not self.kill:
-                    line = readline(1024).strip()
+                    try:
+                        line = readline(1024).strip()
+                    except ConnectionResetError:
+                        self.stop()
+                        return
                     if not line:
                         self.disconnect()
                     break

@@ -55,8 +55,9 @@ def register_events(canvas: Canvas) -> None:
         help += ">>> STATS\n"
         help += ">>> SIZE\n"
         help += ">>> QUIT\n"
-        help += ">>> TEXT x y text (currently disabled)\n"
+        # help += ">>> TEXT x y text (currently disabled)\n"
         help += ">>> PX x y [RRGGBB[AA]]\n"
+        help += f"Pixel per second per user: {client.pps}"
         client.send(help)
 
     @canvas.register("COMMAND-STATS")
