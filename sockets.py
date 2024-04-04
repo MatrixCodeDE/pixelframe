@@ -12,7 +12,7 @@ class Client:
     """
     The client object (used for the server)
     Attributes:
-        pps (int): The number of pixels per second a user can set
+        pps (int): The number of pixels a client can set per second
         ip (str): The IP address of the client
         canvas (Canvas): The canvas object
         socket (socket): The socket the client is connected to
@@ -24,29 +24,32 @@ class Client:
         kill (bool): The attribute that stops/kills all running processes of the class
 
     """
-    pps: int | float = 30  # Pixel per Second
+    pps: int | float  # Pixel per Second
     ip: str
     port: int
     canvas: Canvas
     socket: socket3 | None
     connected: bool = False
     connected_at: float
-    cooldown: float = 1.0 / pps
+    cooldown: float
     cooldown_until: float
     lock: RLock
     kill: bool = False
 
-    def __init__(self, canvas: Canvas, ip: str, port: int) -> None:
+    def __init__(self, canvas: Canvas, ip: str, port: int, pps: int | float = 30) -> None:
         """
         Initializes the client object
         Args:
             canvas (Canvas): The canvas
             ip (str): The IP address of the client
             port (int): The port of the client
+            pps (int): The number of pixels a client can set per second
         """
         self.canvas = canvas
         self.ip = ip
         self.port = port
+        self.pps = pps
+        self.cooldown = 1.0 / self.pps
         self.socket = None
         self.connected_at = time.time()
         self.cooldown_until = 0
@@ -73,8 +76,12 @@ class Client:
             if self.socket:
                 try:
                     self.socket.sendall((line + "\n").encode())
-                except BrokenPipeError:
-                    pass
+                except BrokenPipeError as e:
+                    logger.error(e)
+
+    def set_pps(self, pps: int | float) -> None:
+        self.pps = pps
+        self.cooldown = 1.0 / self.pps
 
     def nospam(self, line: str) -> None:
         """
@@ -109,7 +116,7 @@ class Client:
                 while not self.kill:
                     try:
                         line = readline(1024).strip()
-                    except ConnectionResetError:
+                    except (ConnectionResetError, TimeoutError):
                         self.stop()
                         return
                     if not line:
@@ -143,6 +150,7 @@ class Client:
                     ):
                         self.send("Wrong arguments")
         finally:
+            self.send("Connection Timeout...")
             self.disconnect()
 
     def disconnect(self) -> None:
@@ -168,6 +176,7 @@ class Server(object):
         port (int): The port of the server
         socket(socket): The socket server
         clients (dict[str, Client]): The list of clients
+        cpps (int | float): Refers to default pps of the clients
         kill (bool): The attribute that stops/kills all running processes of the class
     """
     canvas: Canvas
@@ -175,19 +184,22 @@ class Server(object):
     port: int
     socket: socket3
     clients: dict[str, Client]
+    cpps: int | float
     kill: bool = False
 
-    def __init__(self, canvas: Canvas, host: str, port: int) -> None:
+    def __init__(self, canvas: Canvas, host: str, port: int, cpps: int | float) -> None:
         """
         Initializes the server
         Args:
             canvas (Canvas): The canvas object
             host (str): The host address of the server
             port (int): The port of the serve
+            cpps (int | float): Refers to default pps of the clients
         """
         self.canvas = canvas
         self.host = host
         self.port = port
+        self.cpps = cpps
         self.socket = socket3()
         self.socket.bind((self.host, self.port))
         self.socket.listen()
@@ -202,7 +214,6 @@ class Server(object):
         clients = self.clients.values()
         for client in clients:
             client.stop()
-            del self.clients[client.ip]
         self.kill = True
 
     def loop(self):
@@ -222,6 +233,11 @@ class Server(object):
 
             client.task = spawn(client.connect, sock)
 
-    def user_count(self):
+    def user_count(self) -> int:
+        """
+        Returns the number of connected clients
+        Returns:
+            int: number of connected clients
+        """
         connected = [client for client in self.clients.values() if client.connected]
         return len(connected)

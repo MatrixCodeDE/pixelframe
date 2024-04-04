@@ -6,11 +6,13 @@ from canvas import Canvas
 from sockets import Client, Server
 from utils import logger
 
-def register_events(canvas: Canvas) -> None:
+
+def register_events(canvas: Canvas, cpps: int | float) -> None:
     """
     Registers the needed events for the server
     Args:
         canvas (Canvas): The canvas object
+        cpps (int | float): Refers to default pps of the clients
 
     Returns:
         None
@@ -88,10 +90,10 @@ def register_events(canvas: Canvas) -> None:
     # @canvas.register("COMMAND-GODMODE")
     def on_quit(canvas: Canvas, client: Client, mode):
         if mode == "on":
-            client.pps = 100000
+            client.set_pps(100000)
             client.send("You are now god (%d pps)" % client.pps)
         else:
-            client.pps = 100
+            client.set_pps(cpps)
             client.send("You are no longer god (%d pps)" % client.pps)
 
     logger.info("Successfully registered Events")
@@ -101,15 +103,34 @@ def main():
     """
     The main function of PixelFrame
     """
-    canvas = Canvas((1920, 1080), (40, 30))
 
-    register_events(canvas)
+    import argparse, optparse
+
+    parser = argparse.ArgumentParser(usage="python3 [options] main.py")
+
+    parser.add_argument("-H", "--host", dest="hostname",
+                        default="0.0.0.0", type=str,
+                        help="specify hostname to run on")
+    parser.add_argument("-P", "--port", dest="portnum", default=1234,
+                        type=int, help="port number to run on")
+    parser.add_argument("-pps", "--pips", dest="pixelpersecond", default=30,
+                        type=int, help="amount of pixels a client can change per seconds")
+    parser.add_argument("-sx", "--sizex", dest="sizex", default=1920,
+                        type=int, help="canvas size x in pixels")
+    parser.add_argument("-sy", "--sizey", dest="sizey", default=1080,
+                        type=int, help="canvas size y in pixels")
+
+    args = parser.parse_args()
+
+    canvas = Canvas((args.sizex, args.sizey), (40, 30))
+
+    register_events(canvas, args.pixelpersecond)
 
     logger.info("Starting Canvas Loop")
     main_loop = spawn(canvas.loop)
     main_loop.start()
 
-    server = Server(canvas, "0.0.0.0", 1234)
+    server = Server(canvas, args.hostname, args.portnum, args.pixelpersecond)
     canvas.set_server(server)
 
     logger.info(f"Starting Server at {server.host}:{server.port}")
