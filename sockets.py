@@ -101,6 +101,7 @@ class Client:
             socket (socket): the socket of the client
         """
         self.socket = socket
+        self.kill = False
         self.socket.settimeout(10)
         self.connected = True
 
@@ -162,8 +163,8 @@ class Client:
         with self.lock:
             if self.socket:
                 socket = self.socket
-                self.socket = None
                 socket.close()
+                self.socket = None
                 self.connected = False
 
 
@@ -204,6 +205,7 @@ class Server(object):
         self.socket.bind((self.host, self.port))
         self.socket.listen()
         self.clients = {}
+        self.canvas.set_server(self)
 
     def stop(self) -> None:
         """

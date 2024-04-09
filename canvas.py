@@ -1,12 +1,13 @@
 import time
 from collections import deque
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 
 import pygame
 from greenlet import GreenletExit
 from pygame import Surface, SurfaceType, Color
 from gevent.time import sleep as gsleep
 
+from stats import Stats
 from utils import logger
 
 
@@ -96,7 +97,8 @@ class Canvas(object):
     tasks: Queue
     events: dict[str, Callable]
     stats_size: tuple[int, int]
-    pixelcount: int
+    server: Optional["Server"]
+    stats: Stats
 
     def __init__(self, size: tuple[int, int] = None, stats_size: tuple[int, int] = None):
         """
@@ -129,13 +131,21 @@ class Canvas(object):
         self.kill = True
         pygame.quit()
 
-    def set_server(self, server):
+    def set_server(self, server: Optional["Server"]):
         """
         Sets the server (initialized after canvas)
         Args:
             server (Server): The socketserver
         """
         self.server = server
+
+    def set_stats(self, stats: Stats):
+        """
+        Sets the stats (initialized after canvas)
+        Args:
+            stats (Stats): The stats class
+        """
+        self.stats = stats
 
     def get_pixel(self, x: int, y: int) -> Color:
         """
@@ -190,7 +200,7 @@ class Canvas(object):
             g = (g2 * (0xFF - a) + (g * a)) / 0xFF
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
             self.screen.set_at((x, y), (r, g, b))
-        self.pixelcount += 1
+        self.stats.add_pixel(x, y)
 
     def get_pixel_color_count(self) -> dict[str, int]:
         """
@@ -200,7 +210,7 @@ class Canvas(object):
         """
         c = {}
         for x in range(1, self.size[0]):
-            for y in range(1, self.size[1]):
+            for y in range(1, self.size[1] - self.stats_size[0]):
                 r, g, b, a = self.get_pixel(x, y)
                 if r == g == b == 0:
                     continue
@@ -262,7 +272,7 @@ class Canvas(object):
         if not self.server:
             return
         users: int = self.server.user_count()
-        pixel: int = self.pixelcount
+        pixel: int = self.stats.get_pixelcount()
 
         text: str = f"Host: {self.server.host} | Port: {self.server.port} | Users: {users} | Pixels: {pixel}"
         font = pygame.font.SysFont("monospace", self.stats_size[1])

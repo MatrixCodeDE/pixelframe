@@ -4,6 +4,7 @@ from gevent import spawn
 
 from canvas import Canvas
 from sockets import Client, Server
+from stats import Stats
 from utils import logger
 
 
@@ -66,7 +67,6 @@ def register_events(canvas: Canvas, cpps: int | float) -> None:
     def callback(canvas: Canvas, client: Client):
         d = canvas.get_pixel_color_count()
         import operator
-
         dSorted = sorted(d.items(), key=operator.itemgetter(1), reverse=True)
         dString = ""
         for k, v in dSorted:
@@ -128,15 +128,16 @@ def main():
 
     logger.info("Starting Canvas Loop")
     main_loop = spawn(canvas.loop)
-    main_loop.start()
 
     server = Server(canvas, args.hostname, args.portnum, args.pixelpersecond)
-    canvas.set_server(server)
 
     logger.info(f"Starting Server at {server.host}:{server.port}")
     server_loop = spawn(server.loop)
 
+    stats = Stats(canvas, server)
+
     try:
+        main_loop.start()
         server_loop.join()
     except KeyboardInterrupt:
         print("Exitting...")
