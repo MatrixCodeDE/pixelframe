@@ -113,8 +113,8 @@ class Canvas(object):
         pygame.display.set_caption("PixelFrame")
         pygame.font.init()
         self.screen = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
-        self._canvas = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
-        self._stats_screen = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
+        self._canvas = Surface(self.config.visuals.size.get_size())
+        self._stats_screen = Surface(self.config.visuals.size.get_size())
         self.tasks = Queue()
         self.events = {}
         self.server = None
@@ -255,7 +255,7 @@ class Canvas(object):
         """
         for pixel in self.tasks:
             self.put_pixel(pixel)
-        # self._stats_screen.convert_alpha()
+        self._stats_screen.convert_alpha()
         self._stats_screen.fill((0, 0, 0, 0))
         self.screen.blit(self._canvas, (0, 0))
         if self.show_stats:
@@ -281,7 +281,7 @@ class Canvas(object):
                 tsy - tsy / 2 + 2
             )
         )
-        # self.screen.blit(self._stats_screen, (0, 0))
+        self.screen.blit(self._stats_screen, (0, 0))
 
     def register(self, name: str) -> Any:
         """
