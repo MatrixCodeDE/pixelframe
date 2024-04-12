@@ -114,7 +114,7 @@ class Canvas(object):
         pygame.font.init()
         self.screen = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
         self._canvas = Surface(self.config.visuals.size.get_size())
-        self._stats_screen = Surface(self.config.visuals.size.get_size())
+        self._stats_screen = Surface(self.config.visuals.size.get_size(), pygame.SRCALPHA)
         self.tasks = Queue()
         self.events = {}
         self.server = None
