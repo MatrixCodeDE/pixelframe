@@ -7,6 +7,7 @@ from greenlet import GreenletExit
 from pygame import Surface, SurfaceType, Color
 from gevent.time import sleep as gsleep
 
+from Config.config import Config
 from stats import Stats
 from utils import logger
 
@@ -75,52 +76,50 @@ class Queue:
         else:
             raise StopIteration
 
+
 class Canvas(object):
     """
     The canvas object
     Attributes:
-        size (tuple[int, int]): The size of the canvas
+        config (Config): The configuration object
         flags (int): Flags for pygame
         screen (Surface | SurfaceType): The pygame screen
         fps (int): The framerate for visual updates
         kill (bool): The attribute that stops/kills all running processes of the class
         tasks (Queue): The queue of Pixels
         events (dict[str, Callable]): The registered events (usually fired by the Server)
-        stats_size (tuple[int, int]): The size of the statsbar and font
         server (Server): The socketserver
     """
-    size: tuple[int, int] = 500, 500
+    config: Config
     flags: int = pygame.SCALED | pygame.RESIZABLE
     screen: Surface | SurfaceType
+    _canvas: Surface | SurfaceType
+    _stats_screen: Surface | SurfaceType
     fps: int = 30
     kill: bool = False
     tasks: Queue
     events: dict[str, Callable]
-    stats_size: tuple[int, int]
     server: Optional["Server"]
     stats: Stats
+    show_stats: bool
 
-    def __init__(self, size: tuple[int, int] = None, stats_size: tuple[int, int] = None):
+    def __init__(self, config: Config):
         """
         Initializes the canvas
         """
+        self.config = config
         pygame.init()
         pygame.mixer.quit()
         pygame.display.set_caption("PixelFrame")
         pygame.font.init()
-        if size:
-            self.size = size
-        if not stats_size:
-            self.stats_size = 0, 0
-        else:
-            if stats_size[0] < 0 or stats_size[1] < 0:
-                raise Exception("Invalid stats size")
-        self.stats_size = stats_size
-        self.screen = pygame.display.set_mode(self.size, self.flags)
+        self.screen = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
+        self._canvas = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
+        self._stats_screen = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
         self.tasks = Queue()
         self.events = {}
         self.server = None
         self.pixelcount = 0
+        self.show_stats = self.config.visuals.statsbar.enabled
 
     def stop(self):
         """
@@ -157,7 +156,7 @@ class Canvas(object):
         Returns:
             Color
         """
-        return self.screen.get_at(self.translate_position(x, y))
+        return self._canvas.get_at((x, y))
 
     def add_pixel(self, x: int, y: int, r: int, g: int, b: int, a: int = 255) -> None:
         """
@@ -173,7 +172,6 @@ class Canvas(object):
         Returns:
             None
         """
-        x, y = self.translate_position(x, y)
         self.tasks.add(Pixel(x, y, r, g, b, a))
 
     def put_pixel(self, pixel: Pixel):
@@ -188,18 +186,18 @@ class Canvas(object):
         coords, color = pixel.get()
         x, y = coords
         r, g, b, a = color
-        if not (0 <= x < self.size[0] and 0 <= y < self.size[1]):
+        if not (0 <= x < self.config.visuals.size.width and 0 <= y < self.config.visuals.size.height):
             return
         elif pixel.a == 0:
             return
         elif pixel.a == 255:
-            self.screen.set_at(coords, color)
+            self._canvas.set_at(coords, color)
         else:
-            r2, g2, b2, a2 = self.screen.get_at((x, y))
+            r2, g2, b2, a2 = self._canvas.get_at((x, y))
             r = (r2 * (0xFF - a) + (r * a)) / 0xFF
             g = (g2 * (0xFF - a) + (g * a)) / 0xFF
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
-            self.screen.set_at((x, y), (r, g, b))
+            self._canvas.set_at((x, y), (r, g, b))
         self.stats.add_pixel(x, y)
 
     def get_pixel_color_count(self) -> dict[str, int]:
@@ -209,8 +207,8 @@ class Canvas(object):
             A dict with the pixel count
         """
         c = {}
-        for x in range(1, self.size[0]):
-            for y in range(1, self.size[1] - self.stats_size[0]):
+        for x in range(1, self.config.visuals.size.width):
+            for y in range(1, self.config.visuals.size.height):
                 r, g, b, a = self.get_pixel(x, y)
                 if r == g == b == 0:
                     continue
@@ -227,17 +225,13 @@ class Canvas(object):
         Returns:
             A tuple with the size
         """
-        if not self.stats:
-            return self.size
-        else:
-            return self.size[0], self.size[1] - 40
+        return self.config.visuals.size.get_size()
 
     def loop(self) -> None:
         """
         The loop for controlling the canvas
         """
         updates = 1.0 / self.fps
-        flip = pygame.display.flip
 
         while not self.kill:
             start = time.time()
@@ -249,7 +243,6 @@ class Canvas(object):
                     self.trigger("KEYDOWN-" + event.unicode)
 
             self.trigger("render")
-            flip()
 
             end = time.time() - start
             gsleep(max(updates - end, 0))
@@ -262,8 +255,12 @@ class Canvas(object):
         """
         for pixel in self.tasks:
             self.put_pixel(pixel)
-        if self.stats_size[0] > 0:
+        # self._stats_screen.convert_alpha()
+        self._stats_screen.fill((0, 0, 0, 0))
+        self.screen.blit(self._canvas, (0, 0))
+        if self.show_stats:
             self.render_stats()
+        pygame.display.flip()
 
     def render_stats(self):
         """
@@ -275,16 +272,16 @@ class Canvas(object):
         pixel: int = self.stats.get_pixelcount()
 
         text: str = f"Host: {self.server.host} | Port: {self.server.port} | Users: {users} | Pixels: {pixel}"
-        font = pygame.font.SysFont("monospace", self.stats_size[1])
+        font = pygame.font.SysFont("monospace", self.config.visuals.statsbar.size)
         rendertext = font.render(text, True, (255, 255, 255))
-        pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, self.size[0], self.stats_size[0]))
         tsx, tsy = font.size(text)
-        self.screen.blit(rendertext, (self.size[0]/2 - tsx/2, self.stats_size[0]/2 - tsy/2))
-
-    def translate_position(self, x: int, y: int) -> tuple[int, int]:
-        if self.stats_size[0] == 0:
-            return x, y
-        return x, y + self.stats_size[0]
+        self._stats_screen.blit(
+            rendertext, (
+                self.config.visuals.size.width / 2 - tsx / 2,
+                tsy - tsy / 2 + 2
+            )
+        )
+        # self.screen.blit(self._stats_screen, (0, 0))
 
     def register(self, name: str) -> Any:
         """

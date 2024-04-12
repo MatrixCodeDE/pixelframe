@@ -5,6 +5,7 @@ from gevent._socket3 import socket as socket3
 from gevent.lock import RLock
 
 from canvas import Canvas
+from Config.config import Config
 from utils import logger
 
 
@@ -173,6 +174,7 @@ class Server(object):
     The socketserver for handling client sockets
     Attributes:
         canvas (Canvas): The canvas object
+        config (Config): The config object
         host (str): The host address of the server
         port (int): The port of the server
         socket(socket): The socket server
@@ -180,6 +182,7 @@ class Server(object):
         cpps (int | float): Refers to default pps of the clients
         kill (bool): The attribute that stops/kills all running processes of the class
     """
+    config: Config
     canvas: Canvas
     host: str
     port: int
@@ -188,21 +191,19 @@ class Server(object):
     cpps: int | float
     kill: bool = False
 
-    def __init__(self, canvas: Canvas, host: str, port: int, cpps: int | float) -> None:
+    def __init__(self, canvas: Canvas, config: Config) -> None:
         """
         Initializes the server
         Args:
             canvas (Canvas): The canvas object
-            host (str): The host address of the server
-            port (int): The port of the serve
-            cpps (int | float): Refers to default pps of the clients
+            config (Config): The config object
         """
+        self.config = config
         self.canvas = canvas
-        self.host = host
-        self.port = port
-        self.cpps = cpps
+        self.host = self.config.connection.host
+        self.port = self.config.connection.port
         self.socket = socket3()
-        self.socket.bind((self.host, self.port))
+        self.socket.bind((self.config.connection.host, self.config.connection.port))
         self.socket.listen()
         self.clients = {}
         self.canvas.set_server(self)
@@ -231,7 +232,7 @@ class Server(object):
                 client.disconnect()
                 client.task.kill()
             else:
-                client = self.clients[ip] = Client(self.canvas, ip, port)
+                client = self.clients[ip] = Client(self.canvas, ip, port, self.config.game.pps)
 
             client.task = spawn(client.connect, sock)
 

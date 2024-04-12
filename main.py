@@ -1,14 +1,16 @@
 import logging
+import argparse
 
 from gevent import spawn
 
 from canvas import Canvas
+from Config.config import Config
 from sockets import Client, Server
 from stats import Stats
 from utils import logger
 
 
-def register_events(canvas: Canvas, cpps: int | float) -> None:
+def register_events(canvas: Canvas, config: Config) -> None:
     """
     Registers the needed events for the server
     Args:
@@ -87,14 +89,21 @@ def register_events(canvas: Canvas, cpps: int | float) -> None:
     def on_quit(canvas: Canvas, client: Client):
         client.disconnect()
 
-    # @canvas.register("COMMAND-GODMODE")
+    @canvas.register("COMMAND-GODMODE")
     def on_quit(canvas: Canvas, client: Client, mode):
-        if mode == "on":
-            client.set_pps(100000)
+        if not config.game.godmode.enabled:
+            client.send("Godmode is currently disabled")
+        elif mode == "on":
+            client.set_pps(config.game.godmode.pps)
             client.send("You are now god (%d pps)" % client.pps)
         else:
-            client.set_pps(cpps)
+            client.set_pps(config.game.pps)
             client.send("You are no longer god (%d pps)" % client.pps)
+
+    @canvas.register("KEYDOWN-s")
+    def on_keydown_s(canvas: Canvas):
+        canvas.show_stats = not canvas.show_stats
+        logger.info(f"{'Showing' if canvas.show_stats else 'Hiding'} stats on the screen")
 
     logger.info("Successfully registered Events")
 
@@ -104,32 +113,24 @@ def main():
     The main function of PixelFrame
     """
 
-    import argparse, optparse
+    parser = argparse.ArgumentParser(usage="python3 [-c configfile] main.py")
 
-    parser = argparse.ArgumentParser(usage="python3 [options] main.py")
-
-    parser.add_argument("-H", "--host", dest="hostname",
-                        default="0.0.0.0", type=str,
-                        help="specify hostname to run on")
-    parser.add_argument("-P", "--port", dest="portnum", default=1234,
-                        type=int, help="port number to run on")
-    parser.add_argument("-pps", "--pips", dest="pixelpersecond", default=30,
-                        type=int, help="amount of pixels a client can change per seconds")
-    parser.add_argument("-sx", "--sizex", dest="sizex", default=1920,
-                        type=int, help="canvas size x in pixels")
-    parser.add_argument("-sy", "--sizey", dest="sizey", default=1080,
-                        type=int, help="canvas size y in pixels")
+    parser.add_argument("-c", "--config", dest="configfile",
+                        default="Config/config.json", type=str,
+                        help="specify a config file")
 
     args = parser.parse_args()
 
-    canvas = Canvas((args.sizex, args.sizey), (40, 30))
+    config = Config(args.configfile)
 
-    register_events(canvas, args.pixelpersecond)
+    canvas = Canvas(config)
+
+    register_events(canvas, config)
 
     logger.info("Starting Canvas Loop")
     main_loop = spawn(canvas.loop)
 
-    server = Server(canvas, args.hostname, args.portnum, args.pixelpersecond)
+    server = Server(canvas, config)
 
     logger.info(f"Starting Server at {server.host}:{server.port}")
     server_loop = spawn(server.loop)
