@@ -78,18 +78,20 @@ class Config(object):
         self.load_config()
 
     def get_config(self) -> dict:
-        with (open(self.config_file, 'r') as f):
+        with open(self.config_file, "r") as f:
             conf = json.load(f)
         return conf
 
     def load_config(self):
         try:
             conf = self.get_config()
-            self.general = General(**conf['general'])
-            self.connection = Connection(**conf['connection'])
+            self.general = General(**conf["general"])
+            self.connection = Connection(**conf["connection"])
             self.visuals = Visuals(**conf["visuals"])
             self.game = Game(**conf["game"])
         except FileNotFoundError as fe:
-            raise FileNotFoundError(f"The provided Config file was not found: {fe.filename}")
+            raise FileNotFoundError(
+                f"The provided Config file was not found: {fe.filename}"
+            )
         except TypeError as te:
             raise TypeError(f"The provided Config file is malformed: {te.args}")

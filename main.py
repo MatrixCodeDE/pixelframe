@@ -1,13 +1,13 @@
-import logging
 import argparse
-
-from gevent import spawn
+import logging
 
 from canvas import Canvas
-from Config.config import Config
+from gevent import spawn
 from sockets import Client, Server
 from stats import Stats
 from utils import logger
+
+from Config.config import Config
 
 
 def register_events(canvas: Canvas, config: Config) -> None:
@@ -69,6 +69,7 @@ def register_events(canvas: Canvas, config: Config) -> None:
     def callback(canvas: Canvas, client: Client):
         d = canvas.get_pixel_color_count()
         import operator
+
         dSorted = sorted(d.items(), key=operator.itemgetter(1), reverse=True)
         dString = ""
         for k, v in dSorted:
@@ -103,7 +104,9 @@ def register_events(canvas: Canvas, config: Config) -> None:
     @canvas.register("KEYDOWN-s")
     def on_keydown_s(canvas: Canvas):
         canvas.show_stats = not canvas.show_stats
-        logger.info(f"{'Showing' if canvas.show_stats else 'Hiding'} stats on the screen")
+        logger.info(
+            f"{'Showing' if canvas.show_stats else 'Hiding'} stats on the screen"
+        )
 
     logger.info("Successfully registered Events")
 
@@ -115,9 +118,14 @@ def main():
 
     parser = argparse.ArgumentParser(usage="python3 [-c configfile] main.py")
 
-    parser.add_argument("-c", "--config", dest="configfile",
-                        default="Config/config.json", type=str,
-                        help="specify a config file")
+    parser.add_argument(
+        "-c",
+        "--config",
+        dest="configfile",
+        default="Config/config.json",
+        type=str,
+        help="specify a config file",
+    )
 
     args = parser.parse_args()
 

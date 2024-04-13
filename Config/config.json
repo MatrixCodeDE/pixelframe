@@ -12,12 +12,12 @@
       "height": 1080
     },
     "statsbar": {
-      "enabled": false,
+      "enabled": true,
       "size": 30
     }
   },
   "game": {
-    "pps": 30.5,
+    "pps": 30,
     "godmode": {
       "enabled": true,
       "pps": 1000000

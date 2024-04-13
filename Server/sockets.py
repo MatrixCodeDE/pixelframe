@@ -4,9 +4,9 @@ from gevent import spawn
 from gevent._socket3 import socket as socket3
 from gevent.lock import RLock
 
-from canvas import Canvas
+from Canvas.canvas import Canvas
 from Config.config import Config
-from utils import logger
+from Misc.utils import logger
 
 
 class Client:
@@ -25,6 +25,7 @@ class Client:
         kill (bool): The attribute that stops/kills all running processes of the class
 
     """
+
     pps: int | float  # Pixel per Second
     ip: str
     port: int
@@ -37,7 +38,9 @@ class Client:
     lock: RLock
     kill: bool = False
 
-    def __init__(self, canvas: Canvas, ip: str, port: int, pps: int | float = 30) -> None:
+    def __init__(
+        self, canvas: Canvas, ip: str, port: int, pps: int | float = 30
+    ) -> None:
         """
         Initializes the client object
         Args:
@@ -135,7 +138,7 @@ class Client:
                     cd = self.cooldown_until - now
                     if cd < 0:
                         if not self.canvas.trigger(
-                                "COMMAND-%s" % command.upper(), self, *arguments
+                            "COMMAND-%s" % command.upper(), self, *arguments
                         ):
                             self.send("Wrong arguments")
                         self.cooldown_until = now + self.cooldown
@@ -144,11 +147,13 @@ class Client:
                         if cd >= 1.0:
                             self.nospam(f"You are on cooldown for {cd:.2f} seconds")
                         else:
-                            self.nospam(f"You are on cooldown for {cd*1000:.2f} milliseconds")
+                            self.nospam(
+                                f"You are on cooldown for {cd*1000:.2f} milliseconds"
+                            )
 
                 else:
                     if not self.canvas.trigger(
-                            "COMMAND-%s" % command.upper(), self, *arguments
+                        "COMMAND-%s" % command.upper(), self, *arguments
                     ):
                         self.send("Wrong arguments")
         finally:
@@ -182,6 +187,7 @@ class Server(object):
         cpps (int | float): Refers to default pps of the clients
         kill (bool): The attribute that stops/kills all running processes of the class
     """
+
     config: Config
     canvas: Canvas
     host: str
@@ -232,7 +238,9 @@ class Server(object):
                 client.disconnect()
                 client.task.kill()
             else:
-                client = self.clients[ip] = Client(self.canvas, ip, port, self.config.game.pps)
+                client = self.clients[ip] = Client(
+                    self.canvas, ip, port, self.config.game.pps
+                )
 
             client.task = spawn(client.connect, sock)
 

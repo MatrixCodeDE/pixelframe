@@ -37,5 +37,15 @@ pip3 install -r requirements.txt
 ### Starting
 
 ```shell
-python3 pixelframe.py
+python3 [-c configfile] pixelframe.py
+```
+
+### Contribution
+
+If you want to improve this repository, feel free to contribute. \
+Please comment your changes properly and run the following script before committing:
+
+```shell
+python3 -m black .
+python3 -m isort .
 ```

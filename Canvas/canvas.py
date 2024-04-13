@@ -1,19 +1,20 @@
 import time
 from collections import deque
-from typing import Callable, Any, Optional
+from typing import Any, Callable, Optional
 
 import pygame
-from greenlet import GreenletExit
-from pygame import Surface, SurfaceType, Color
 from gevent.time import sleep as gsleep
+from greenlet import GreenletExit
+from pygame import Color, Surface, SurfaceType
 
 from Config.config import Config
-from stats import Stats
-from utils import logger
+from Misc.utils import logger
+from Stats.stats import Stats
 
 
 class Pixel(object):
     """An object for storing pixel with easy and clear structure"""
+
     x: int
     y: int
     r: int
@@ -36,6 +37,7 @@ class Pixel(object):
 
 class Queue:
     """The queue for pixels to set at the canvas"""
+
     queue: deque
 
     def __init__(self) -> None:
@@ -90,6 +92,7 @@ class Canvas(object):
         events (dict[str, Callable]): The registered events (usually fired by the Server)
         server (Server): The socketserver
     """
+
     config: Config
     flags: int = pygame.SCALED | pygame.RESIZABLE
     screen: Surface | SurfaceType
@@ -112,9 +115,13 @@ class Canvas(object):
         pygame.mixer.quit()
         pygame.display.set_caption("PixelFrame")
         pygame.font.init()
-        self.screen = pygame.display.set_mode(self.config.visuals.size.get_size(), self.flags)
+        self.screen = pygame.display.set_mode(
+            self.config.visuals.size.get_size(), self.flags
+        )
         self._canvas = Surface(self.config.visuals.size.get_size())
-        self._stats_screen = Surface(self.config.visuals.size.get_size(), pygame.SRCALPHA)
+        self._stats_screen = Surface(
+            self.config.visuals.size.get_size(), pygame.SRCALPHA
+        )
         self.tasks = Queue()
         self.events = {}
         self.server = None
@@ -186,7 +193,10 @@ class Canvas(object):
         coords, color = pixel.get()
         x, y = coords
         r, g, b, a = color
-        if not (0 <= x < self.config.visuals.size.width and 0 <= y < self.config.visuals.size.height):
+        if not (
+            0 <= x < self.config.visuals.size.width
+            and 0 <= y < self.config.visuals.size.height
+        ):
             return
         elif pixel.a == 0:
             return
@@ -271,15 +281,21 @@ class Canvas(object):
         users: int = self.server.user_count()
         pixel: int = self.stats.get_pixelcount()
 
-        text: str = f"Host: {self.server.host} | Port: {self.server.port} | Users: {users} | Pixels: {pixel}"
-        font = pygame.font.SysFont("monospace", self.config.visuals.statsbar.size)
+        outline = 10
+
+        text: str = (
+            f"Host: {self.server.host} | Port: {self.server.port} | Users: {users} | Pixels: {pixel}"
+        )
+        font = pygame.font.Font("font.otf", self.config.visuals.statsbar.size)
+        outline = pygame.font.Font("font_bold.otf", self.config.visuals.statsbar.size)
         rendertext = font.render(text, True, (255, 255, 255))
+        renderoutline = outline.render(text, True, (0, 0, 0))
         tsx, tsy = font.size(text)
         self._stats_screen.blit(
-            rendertext, (
-                self.config.visuals.size.width / 2 - tsx / 2,
-                tsy - tsy / 2 + 2
-            )
+            renderoutline, (self.config.visuals.size.width / 2 - tsx / 2, tsy - tsy / 2)
+        )
+        self._stats_screen.blit(
+            rendertext, (self.config.visuals.size.width / 2 - tsx / 2, tsy - tsy / 2)
         )
         self.screen.blit(self._stats_screen, (0, 0))
 
