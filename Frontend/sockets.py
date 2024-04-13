@@ -1,10 +1,10 @@
 import time
+from typing import Optional
 
 from gevent import spawn
 from gevent._socket3 import socket as socket3
 from gevent.lock import RLock
 
-from Canvas.canvas import Canvas
 from Config.config import Config
 from Misc.utils import logger
 
@@ -29,7 +29,7 @@ class Client:
     pps: int | float  # Pixel per Second
     ip: str
     port: int
-    canvas: Canvas
+    canvas: Optional["Canvas"]
     socket: socket3 | None
     connected: bool = False
     connected_at: float
@@ -37,9 +37,10 @@ class Client:
     cooldown_until: float
     lock: RLock
     kill: bool = False
+    timeout: bool
 
     def __init__(
-        self, canvas: Canvas, ip: str, port: int, pps: int | float = 30
+        self, canvas: Optional["Canvas"], ip: str, port: int, pps: int | float = 30
     ) -> None:
         """
         Initializes the client object
@@ -58,6 +59,7 @@ class Client:
         self.connected_at = time.time()
         self.cooldown_until = 0
         self.lock = RLock()
+        self.timeout = False
 
     def stop(self) -> None:
         """
@@ -79,7 +81,7 @@ class Client:
         with self.lock:
             if self.socket:
                 try:
-                    self.socket.sendall((line + "\n").encode())
+                    self.socket.sendall(("> " + line + "\n").encode())
                 except BrokenPipeError as e:
                     logger.error(e)
 
@@ -106,7 +108,7 @@ class Client:
         """
         self.socket = socket
         self.kill = False
-        self.socket.settimeout(10)
+        self.socket.settimeout(self.canvas.config.connection.timeout)
         self.connected = True
 
         logger.info(f"Client connected: {self.ip}:{self.port}")
@@ -126,12 +128,13 @@ class Client:
                         return
                     if not line:
                         self.disconnect()
+                        return
                     break
                 arguments = line.split()
                 if not arguments:
                     self.disconnect()
-                    break
-                command = arguments.pop(0)
+                    return
+                command = arguments.pop(0).upper()
 
                 if command == "PX" and len(arguments) != 2:
                     now = time.time()
@@ -158,6 +161,7 @@ class Client:
                         self.send("Wrong arguments")
         finally:
             self.send("Connection Timeout...")
+            self.timeout = True
             self.disconnect()
 
     def disconnect(self) -> None:
@@ -169,12 +173,19 @@ class Client:
         with self.lock:
             if self.socket:
                 socket = self.socket
+                if self.timeout:
+                    self.send("Disconnected")
+                else:
+                    self.send(
+                        "You were disconnected due to another connection with your IP address."
+                    )
                 socket.close()
                 self.socket = None
                 self.connected = False
+                logger.info(f"Client disconnected: {self.ip}:{self.port}")
 
 
-class Server(object):
+class Socketserver(object):
     """
     The socketserver for handling client sockets
     Attributes:
@@ -189,7 +200,7 @@ class Server(object):
     """
 
     config: Config
-    canvas: Canvas
+    canvas: Optional["Canvas"]
     host: str
     port: int
     socket: socket3
@@ -197,7 +208,7 @@ class Server(object):
     cpps: int | float
     kill: bool = False
 
-    def __init__(self, canvas: Canvas, config: Config) -> None:
+    def __init__(self, canvas: Optional["Canvas"], config: Config) -> None:
         """
         Initializes the server
         Args:

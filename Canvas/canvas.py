@@ -5,9 +5,12 @@ from typing import Any, Callable, Optional
 import pygame
 from gevent.time import sleep as gsleep
 from greenlet import GreenletExit
+from PIL import Image
 from pygame import Color, Surface, SurfaceType
 
 from Config.config import Config
+from Frontend.display import Display
+from Frontend.sockets import Socketserver
 from Misc.utils import logger
 from Stats.stats import Stats
 
@@ -84,25 +87,22 @@ class Canvas(object):
     The canvas object
     Attributes:
         config (Config): The configuration object
-        flags (int): Flags for pygame
-        screen (Surface | SurfaceType): The pygame screen
+        _canvas (Canvas): The canvas
         fps (int): The framerate for visual updates
         kill (bool): The attribute that stops/kills all running processes of the class
         tasks (Queue): The queue of Pixels
-        events (dict[str, Callable]): The registered events (usually fired by the Server)
-        server (Server): The socketserver
+        events (dict[str, Callable]): The registered events (usually fired by the Frontend)
+        server (Frontend): The socketserver
     """
 
     config: Config
-    flags: int = pygame.SCALED | pygame.RESIZABLE
-    screen: Surface | SurfaceType
-    _canvas: Surface | SurfaceType
-    _stats_screen: Surface | SurfaceType
+    _canvas: Image
+    display: Display | None
     fps: int = 30
     kill: bool = False
     tasks: Queue
     events: dict[str, Callable]
-    server: Optional["Server"]
+    server: Socketserver
     stats: Stats
     show_stats: bool
 
@@ -111,22 +111,15 @@ class Canvas(object):
         Initializes the canvas
         """
         self.config = config
-        pygame.init()
-        pygame.mixer.quit()
-        pygame.display.set_caption("PixelFrame")
-        pygame.font.init()
-        self.screen = pygame.display.set_mode(
-            self.config.visuals.size.get_size(), self.flags
-        )
-        self._canvas = Surface(self.config.visuals.size.get_size())
-        self._stats_screen = Surface(
-            self.config.visuals.size.get_size(), pygame.SRCALPHA
-        )
+        self._canvas = Image.new("RGBA", self.config.visuals.size.get_size())
         self.tasks = Queue()
         self.events = {}
-        self.server = None
         self.pixelcount = 0
-        self.show_stats = self.config.visuals.statsbar.enabled
+
+        if self.config.frontend.display:
+            self.display = Display(self)
+        else:
+            self.display = None
 
     def stop(self):
         """
@@ -135,13 +128,14 @@ class Canvas(object):
             None
         """
         self.kill = True
-        pygame.quit()
+        if self.display:
+            self.display.stop()
 
-    def set_server(self, server: Optional["Server"]):
+    def set_server(self, server: Socketserver):
         """
         Sets the server (initialized after canvas)
         Args:
-            server (Server): The socketserver
+            server (Frontend): The socketserver
         """
         self.server = server
 
@@ -163,7 +157,7 @@ class Canvas(object):
         Returns:
             Color
         """
-        return self._canvas.get_at((x, y))
+        return self._canvas.getpixel((x, y))
 
     def add_pixel(self, x: int, y: int, r: int, g: int, b: int, a: int = 255) -> None:
         """
@@ -201,13 +195,13 @@ class Canvas(object):
         elif pixel.a == 0:
             return
         elif pixel.a == 255:
-            self._canvas.set_at(coords, color)
+            self._canvas.putpixel(coords, color)
         else:
-            r2, g2, b2, a2 = self._canvas.get_at((x, y))
+            r2, g2, b2, a2 = self._canvas.getpixel(coords)
             r = (r2 * (0xFF - a) + (r * a)) / 0xFF
             g = (g2 * (0xFF - a) + (g * a)) / 0xFF
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
-            self._canvas.set_at((x, y), (r, g, b))
+            self._canvas.putpixel((x, y), (r, g, b))
         self.stats.add_pixel(x, y)
 
     def get_pixel_color_count(self) -> dict[str, int]:
@@ -245,19 +239,13 @@ class Canvas(object):
 
         while not self.kill:
             start = time.time()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.trigger("stop")
-                    return
-                elif event.type == pygame.KEYDOWN:
-                    self.trigger("KEYDOWN-" + event.unicode)
 
-            self.trigger("render")
+            self.trigger("update")
 
             end = time.time() - start
             gsleep(max(updates - end, 0))
 
-    def render(self):
+    def update(self):
         """
         Fired by the canvas loop to render queued Pixels
         Returns:
@@ -265,39 +253,6 @@ class Canvas(object):
         """
         for pixel in self.tasks:
             self.put_pixel(pixel)
-        self._stats_screen.convert_alpha()
-        self._stats_screen.fill((0, 0, 0, 0))
-        self.screen.blit(self._canvas, (0, 0))
-        if self.show_stats:
-            self.render_stats()
-        pygame.display.flip()
-
-    def render_stats(self):
-        """
-        Renders the stats of the canvas if activated
-        """
-        if not self.server:
-            return
-        users: int = self.server.user_count()
-        pixel: int = self.stats.get_pixelcount()
-
-        outline = 10
-
-        text: str = (
-            f"Host: {self.server.host} | Port: {self.server.port} | Users: {users} | Pixels: {pixel}"
-        )
-        font = pygame.font.Font("font.otf", self.config.visuals.statsbar.size)
-        outline = pygame.font.Font("font_bold.otf", self.config.visuals.statsbar.size)
-        rendertext = font.render(text, True, (255, 255, 255))
-        renderoutline = outline.render(text, True, (0, 0, 0))
-        tsx, tsy = font.size(text)
-        self._stats_screen.blit(
-            renderoutline, (self.config.visuals.size.width / 2 - tsx / 2, tsy - tsy / 2)
-        )
-        self._stats_screen.blit(
-            rendertext, (self.config.visuals.size.width / 2 - tsx / 2, tsy - tsy / 2)
-        )
-        self.screen.blit(self._stats_screen, (0, 0))
 
     def register(self, name: str) -> Any:
         """
@@ -345,9 +300,17 @@ class Canvas(object):
             except:
                 logger.exception("Error in callback for %r", name)
 
+    def get_canvas(self) -> Image:
+        """
+        Gets a copy of the canvas
+        Returns:
+            Copy of the canvas
+        """
+        return self._canvas.copy()
+
     def is_alive(self) -> bool:
         """
-        Gets of the canvas is still alive/rendering
+        Gets if the canvas is still alive/rendering
         Returns:
             If the process is alive
         """

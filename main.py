@@ -1,13 +1,13 @@
 import argparse
 import logging
 
-from canvas import Canvas
 from gevent import spawn
-from sockets import Client, Server
-from stats import Stats
-from utils import logger
 
+from Canvas.canvas import Canvas
 from Config.config import Config
+from Frontend.sockets import Client, Socketserver
+from Misc.utils import logger
+from Stats.stats import Stats
 
 
 def register_events(canvas: Canvas, config: Config) -> None:
@@ -15,7 +15,7 @@ def register_events(canvas: Canvas, config: Config) -> None:
     Registers the needed events for the server
     Args:
         canvas (Canvas): The canvas object
-        cpps (int | float): Refers to default pps of the clients
+        config (Config): The config object
 
     Returns:
         None
@@ -23,9 +23,9 @@ def register_events(canvas: Canvas, config: Config) -> None:
 
     logger.info("Registering events")
 
-    @canvas.register("render")
-    def render(canvas: Canvas):
-        canvas.render()
+    @canvas.register("update")
+    def update(canvas: Canvas, *args, **kwargs):
+        canvas.update()
 
     @canvas.register("stop")
     def stop(canvas: Canvas):
@@ -49,6 +49,7 @@ def register_events(canvas: Canvas, config: Config) -> None:
             else:
                 return
             canvas.add_pixel(x, y, r, g, b, a)
+            client.send("PX Success")
         else:
             r, g, b, a = canvas.get_pixel(x, y)
             client.send("PX %d %d %02x%02x%02x%02x" % (x, y, r, g, b, a))
@@ -90,16 +91,16 @@ def register_events(canvas: Canvas, config: Config) -> None:
     def on_quit(canvas: Canvas, client: Client):
         client.disconnect()
 
-    @canvas.register("COMMAND-GODMODE")
-    def on_quit(canvas: Canvas, client: Client, mode):
-        if not config.game.godmode.enabled:
-            client.send("Godmode is currently disabled")
-        elif mode == "on":
-            client.set_pps(config.game.godmode.pps)
-            client.send("You are now god (%d pps)" % client.pps)
-        else:
-            client.set_pps(config.game.pps)
-            client.send("You are no longer god (%d pps)" % client.pps)
+    if config.game.godmode.enabled:
+
+        @canvas.register("COMMAND-GODMODE")
+        def on_quit(canvas: Canvas, client: Client, mode):
+            if mode == "on":
+                client.set_pps(config.game.godmode.pps)
+                client.send("You are now god (%d pps)" % client.pps)
+            else:
+                client.set_pps(config.game.pps)
+                client.send("You are no longer god (%d pps)" % client.pps)
 
     @canvas.register("KEYDOWN-s")
     def on_keydown_s(canvas: Canvas):
@@ -138,7 +139,7 @@ def main():
     logger.info("Starting Canvas Loop")
     main_loop = spawn(canvas.loop)
 
-    server = Server(canvas, config)
+    server = Socketserver(canvas, config)
 
     logger.info(f"Starting Server at {server.host}:{server.port}")
     server_loop = spawn(server.loop)
@@ -146,8 +147,8 @@ def main():
     stats = Stats(canvas, server)
 
     try:
-        main_loop.start()
-        server_loop.join()
+        server_loop.start()
+        main_loop.join()
     except KeyboardInterrupt:
         print("Exitting...")
     canvas.stop()

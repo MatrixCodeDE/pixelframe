@@ -2,11 +2,28 @@
 
 #### Pixelframe is a rewrite of the [Pixelflut Project](https://github.com/defnull/pixelflut), compatible with Python 3.
 
-I created this on one afternoon, so most of the code is very sketchy and copied from the [original repository](https://github.com/defnull/pixelflut) and [custom modifications](https://git.leon.wtf/leon/pixelflut). I haven't checked everything, so don't mind to open a pull request if you have some improvements :)
+I wanted to use the Pixelflut project for private purpose, but I found out that it was written in Python 2, which is heavily outdated, so I created this.
+
+## Features
+
+Since this is a rewrite of the entire original project, I also added some features the old one has not.
+
+### Display
+
+PyGame isn't exactly a new feature, but its optional now (Web Service coming soon). The new base of this project is Pillow. Also, you can display a stats bar for connection details and basic stats of the canvas when using in public.
+
+### Interactive Sockets
+
+Like the old version, this project uses sockets to communicate with the players. You can set pixels, get pixel colors and even view stats for the whole canvas. New features are a timeout for the connection and a cooldown for spam protection.
+
+### Config
+
+A config for creating templates and sharing them, made easy.
+
 
 ## Usage: The Pixelflut Protocol
 
-PixelFrame uses the base of the Pixelflut Protocol for it's commands. Therefore the basic commands are the same:
+PixelFrame uses the base of the Pixelflut Protocol for its commands. Therefore, the basic commands are the same:
 
 * `HELP`: Returns a short introductional help text.
 * `SIZE`: Returns the size of the visible canvas in pixel as `SIZE <w> <h>`.
@@ -17,12 +34,15 @@ PixelFrame uses the base of the Pixelflut Protocol for it's commands. Therefore 
 Example:
 
     $ echo "SIZE" | nc pixelflut.example.com 1234
-    SIZE 800 600
-    $ echo "PX 23 42 ff8000" | nc pixelflut.example.com 1234
-    $ echo "PX 32 42" | nc pixelflut.example.com 1234
-    PX 23 42 ff8000
+    > SIZE 1920 1080
+    $ echo "PX 100 200" | nc pixelflut.example.com 1234
+    > PX 100 200 f6a8c3
+    $ echo "PX 710 80 fbba97" | nc pixelflut.example.com 1234
+    > PX Success
+    $ echo "PX 711 80 fbba97" | nc pixelflut.example.com 1234
+    > You are on cooldown for 21 milliseconds
 
-Anyway, due to a rewrite of the connection handler with a specific timeout, multiple commands seperated by `\n` are **not** supported. But the server will answer to invalid commands, even if you are on timeout.
+Anyway, due to a rewrite of the connection handler with a specific timeout, multiple commands seperated by `\n` are **not** supported. But the server will answer to invalid commands, even if you are on cooldown.
 
 ## Server
 ### Installation

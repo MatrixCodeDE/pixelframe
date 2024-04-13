@@ -2,9 +2,13 @@
   "general": {
     "name": "PixelFrame"
   },
+  "frontend": {
+    "display": true
+  },
   "connection": {
     "host": "0.0.0.0",
-    "port": 1234
+    "port": 1234,
+    "timeout": 30
   },
   "visuals": {
     "size": {
@@ -17,7 +21,7 @@
     }
   },
   "game": {
-    "pps": 30,
+    "pps": 0.1,
     "godmode": {
       "enabled": true,
       "pps": 1000000

@@ -3,11 +3,11 @@ from typing import Optional
 
 class Stats:
     canvas: Optional["Canvas"]
-    server: Optional["Server"]
+    server: Optional["Socketserver"]
 
     pixelstats: dict[str, int]
 
-    def __init__(self, canvas: Optional["Canvas"], server: Optional["Server"]):
+    def __init__(self, canvas: Optional["Canvas"], server: Optional["Socketserver"]):
         self.canvas = canvas
         self.server = server
         self.pixelstats = {}
