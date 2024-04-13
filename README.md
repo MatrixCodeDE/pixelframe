@@ -1,8 +1,10 @@
 # Pixelframe: Multiplayer canvas
 
+## r/Place for hackers and computer scientists
+
 #### Pixelframe is a rewrite of the [Pixelflut Project](https://github.com/defnull/pixelflut), compatible with Python 3.
 
-I wanted to use the Pixelflut project for private purpose, but I found out that it was written in Python 2, which is heavily outdated, so I created this.
+I wanted to use the Pixelflut project for a university project, but I found out that it was written in Python 2, which is heavily outdated, so I created this.
 
 ## Features
 
@@ -27,9 +29,10 @@ PixelFrame uses the base of the Pixelflut Protocol for its commands. Therefore, 
 
 * `HELP`: Returns a short introductional help text.
 * `SIZE`: Returns the size of the visible canvas in pixel as `SIZE <w> <h>`.
-* `PX <x> <y>` Return the current color of a pixel as `PX <x> <y> <rrggbb>`.
+* `PX <x> <y>`: Return the current color of a pixel as `PX <x> <y> <rrggbbaa>`.
 * `PX <x> <y> <rrggbb(aa)>`: Draw a single pixel at position (x, y) with the specified hex color code.
   If the color code contains an alpha channel value, it is blended with the current color of the pixel.
+* `STATS`: Returns the pixel color distribution of the canvas (except black) ordered by pixel frequency.
 
 Example:
 
@@ -69,3 +72,8 @@ Please comment your changes properly and run the following script before committ
 python3 -m black .
 python3 -m isort .
 ```
+
+## Credits
+
+* [Pixelflut](https://github.com/defnull/pixelflut) - A lot of inspiration and code snippets
+* [Leon](https://git.leon.wtf/leon/pixelflut) - The `STATS` command

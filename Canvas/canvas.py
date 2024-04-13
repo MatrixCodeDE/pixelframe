@@ -102,9 +102,8 @@ class Canvas(object):
     kill: bool = False
     tasks: Queue
     events: dict[str, Callable]
-    server: Socketserver
+    socketserver: Socketserver
     stats: Stats
-    show_stats: bool
 
     def __init__(self, config: Config):
         """
@@ -131,13 +130,14 @@ class Canvas(object):
         if self.display:
             self.display.stop()
 
-    def set_server(self, server: Socketserver):
+    def set_socketserver(self, socketserver: Socketserver):
         """
-        Sets the server (initialized after canvas)
+        Sets the server (initialized after canvas) and sets/updates the display's socketserver
         Args:
-            server (Frontend): The socketserver
+            socketserver (Socketserver): The socketserver
         """
-        self.server = server
+        self.socketserver = socketserver
+        self.display.set_socketserver(self.socketserver)
 
     def set_stats(self, stats: Stats):
         """

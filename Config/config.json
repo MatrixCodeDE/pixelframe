@@ -3,7 +3,10 @@
     "name": "PixelFrame"
   },
   "frontend": {
-    "display": true
+    "display": {
+      "enabled": true,
+      "fps": 10
+    }
   },
   "connection": {
     "host": "0.0.0.0",
@@ -21,7 +24,7 @@
     }
   },
   "game": {
-    "pps": 0.1,
+    "pps": 30,
     "godmode": {
       "enabled": true,
       "pps": 1000000

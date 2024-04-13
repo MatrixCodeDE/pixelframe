@@ -1,5 +1,8 @@
 import json
+import time
 from typing import Any
+
+from Misc.utils import confirm, logger
 
 
 class General(object):
@@ -9,11 +12,24 @@ class General(object):
         self.name = name
 
 
-class Frontend:
-    display: bool
+class Display:
+    enabled: bool
+    fps: int
 
-    def __init__(self, display: bool):
-        self.display = display
+    def __init__(self, enabled: bool, fps: int):
+        self.enabled = enabled
+        self.fps = fps
+        if self.fps > 10:
+            logger.warn("Display FPS > 10 can result in major performance problems!")
+            time.sleep(0.1)  # To make sure logger message was sent
+            confirm()
+
+
+class Frontend:
+    display: Display
+
+    def __init__(self, display: dict):
+        self.display = Display(**display)
 
 
 class Connection(object):

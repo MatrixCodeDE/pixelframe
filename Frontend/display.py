@@ -13,30 +13,46 @@ from Misc.utils import logger
 class Display:
     config: Optional["Config"]
     canvas: Optional["Canvas"]
+    socketserver: Optional["Socketserver"]
 
     screen: Surface | SurfaceType
-    canvas: Surface | SurfaceType
-    stats_screen: Surface | SurfaceType
     kill: bool
     loop_routine: Greenlet
+    show_stats: bool
 
     def __init__(self, canvas: Optional["Canvas"]):
         self.canvas = canvas
         self.config = canvas.config
         self.kill = False
+        self.show_stats = self.config.visuals.statsbar.enabled
         pygame.init()
         pygame.mixer.quit()
         pygame.display.set_caption("PixelFrame")
         pygame.font.init()
         self.screen = pygame.display.set_mode(self.config.visuals.size.get_size())
-        self.stats_screen = Surface(
-            self.config.visuals.size.get_size(), pygame.SRCALPHA
-        )
+
+        self.register_events()
 
         self.loop_routine = spawn(self.loop)
 
+    def set_socketserver(self, socketserver: Optional["Socketserver"]) -> None:
+        self.socketserver = socketserver
+
+    def register_events(self):
+
+        logger.info("Registering events for 'DISPLAY'")
+
+        @self.canvas.register("KEYDOWN-s")
+        def on_keydown_s(*args, **kwargs):
+            self.show_stats = not self.show_stats
+            logger.info(
+                f"{'Showing' if self.show_stats else 'Hiding'} stats on the screen"
+            )
+
+        logger.info("Successfully registered events for 'DISPLAY'")
+
     def loop(self):
-        updates = 1.0 / 5
+        updates = 1.0 / 10
 
         while not self.kill:
             start = time.time()
@@ -57,7 +73,34 @@ class Display:
 
         image: Image = self.canvas.get_canvas()
         img = pygame.image.fromstring(image.tobytes(), image.size, image.mode)
+        self.screen.fill((0, 0, 0))
         self.screen.blit(img, (0, 0))
+
+        if self.show_stats:
+            users: int = self.canvas.socketserver.user_count()
+            pixel: int = self.canvas.stats.get_pixelcount()
+
+            text: str = (
+                f"Host: {self.canvas.socketserver.host} | Port: {self.canvas.socketserver.port} | Users: {users} | Pixels: {pixel}"
+            )
+
+            font = pygame.font.Font("Misc/font.otf", self.config.visuals.statsbar.size)
+            outline = pygame.font.Font(
+                "Misc/font_bold.otf", self.config.visuals.statsbar.size
+            )
+            rendertext = font.render(text, True, (255, 255, 255))
+            renderoutline = outline.render(text, True, (0, 0, 0))
+
+            tsx, tsy = font.size(text)
+            self.screen.blit(
+                renderoutline,
+                (self.config.visuals.size.width / 2 - tsx / 2, tsy - tsy / 2),
+            )
+            self.screen.blit(
+                rendertext,
+                (self.config.visuals.size.width / 2 - tsx / 2, tsy - tsy / 2),
+            )
+
         pygame.display.update()
 
     def stop(self):

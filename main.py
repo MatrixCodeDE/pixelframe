@@ -102,13 +102,6 @@ def register_events(canvas: Canvas, config: Config) -> None:
                 client.set_pps(config.game.pps)
                 client.send("You are no longer god (%d pps)" % client.pps)
 
-    @canvas.register("KEYDOWN-s")
-    def on_keydown_s(canvas: Canvas):
-        canvas.show_stats = not canvas.show_stats
-        logger.info(
-            f"{'Showing' if canvas.show_stats else 'Hiding'} stats on the screen"
-        )
-
     logger.info("Successfully registered Events")
 
 
