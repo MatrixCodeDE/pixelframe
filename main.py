@@ -1,10 +1,12 @@
 import argparse
 import logging
 
+import uvicorn
 from gevent import spawn
 
 from Canvas.canvas import Canvas
 from Config.config import Config
+from Frontend.API.pixelapi import start_api
 from Frontend.sockets import Client, Socketserver
 from Misc.utils import logger
 from Stats.stats import Stats
@@ -134,13 +136,16 @@ def main():
 
     server = Socketserver(canvas, config)
 
-    logger.info(f"Starting Server at {server.host}:{server.port}")
+    api = spawn(start_api, canvas, config)
+
+    logger.info(f"Starting Sockerserver at {server.host}:{server.port}")
     server_loop = spawn(server.loop)
 
     stats = Stats(canvas, server)
 
     try:
         server_loop.start()
+        api.start()
         main_loop.join()
     except KeyboardInterrupt:
         print("Exitting...")

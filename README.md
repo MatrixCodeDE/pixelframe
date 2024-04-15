@@ -14,6 +14,14 @@ Since this is a rewrite of the entire original project, I also added some featur
 
 PyGame isn't exactly a new feature, but its optional now (Web Service coming soon). The new base of this project is Pillow. Also, you can display a stats bar for connection details and basic stats of the canvas when using in public.
 
+### Website (Coming Soon)
+
+Can display the current canvas
+
+### API (Coming Soon)
+
+Based on FastAPI, can update pixels and also hosting the [Website](#website-coming-soon)
+
 ### Interactive Sockets
 
 Like the old version, this project uses sockets to communicate with the players. You can set pixels, get pixel colors and even view stats for the whole canvas. New features are a timeout for the connection and a cooldown for spam protection.
@@ -77,3 +85,4 @@ python3 -m isort .
 
 * [Pixelflut](https://github.com/defnull/pixelflut) - A lot of inspiration and code snippets
 * [Leon](https://git.leon.wtf/leon/pixelflut) - The `STATS` command
+* [LyonsType](./Misc/OFL.txt) - The font `LT Superior Mono`

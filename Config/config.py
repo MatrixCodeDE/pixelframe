@@ -2,7 +2,7 @@ import json
 import time
 from typing import Any
 
-from Misc.utils import confirm, logger
+from Misc.utils import confirm, logger, NoFrontendException
 
 
 class General(object):
@@ -25,21 +25,41 @@ class Display:
             confirm()
 
 
+class Api:
+    enabled: bool
+
+    def __init__(self, enabled: bool):
+        self.enabled = enabled
+
+
 class Frontend:
     display: Display
+    api: Api
 
-    def __init__(self, display: dict):
+    def __init__(self, display: dict, api: dict):
         self.display = Display(**display)
+        self.api = Api(**api)
+        if not self.display.enabled and not self.api.enabled:
+            raise NoFrontendException()
+
+
+class Ports:
+    socket: int
+    api: int
+
+    def __init__(self, socket: int, api: int):
+        self.socket = socket
+        self.api = api
 
 
 class Connection(object):
     host: str
-    port: int
+    ports: Ports
     timeout: int
 
-    def __init__(self, host: str, port: int, timeout: int):
+    def __init__(self, host: str, ports: dict, timeout: int):
         self.host = host
-        self.port = port
+        self.ports = Ports(**ports)
         self.timeout = timeout
 
 

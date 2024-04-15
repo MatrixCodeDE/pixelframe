@@ -5,6 +5,7 @@ from gevent import spawn
 from gevent._socket3 import socket as socket3
 from gevent.lock import RLock
 
+from Canvas.canvas import Canvas
 from Config.config import Config
 from Misc.utils import logger
 
@@ -29,7 +30,7 @@ class Client:
     pps: int | float  # Pixel per Second
     ip: str
     port: int
-    canvas: Optional["Canvas"]
+    canvas: Canvas
     socket: socket3 | None
     connected: bool = False
     connected_at: float
@@ -200,7 +201,7 @@ class Socketserver(object):
     """
 
     config: Config
-    canvas: Optional["Canvas"]
+    canvas: Canvas
     host: str
     port: int
     socket: socket3
@@ -208,7 +209,7 @@ class Socketserver(object):
     cpps: int | float
     kill: bool = False
 
-    def __init__(self, canvas: Optional["Canvas"], config: Config) -> None:
+    def __init__(self, canvas: Canvas, config: Config) -> None:
         """
         Initializes the server
         Args:
@@ -218,9 +219,9 @@ class Socketserver(object):
         self.config = config
         self.canvas = canvas
         self.host = self.config.connection.host
-        self.port = self.config.connection.port
+        self.port = self.config.connection.ports.socket
         self.socket = socket3()
-        self.socket.bind((self.config.connection.host, self.config.connection.port))
+        self.socket.bind((self.host, self.port))
         self.socket.listen()
         self.clients = {}
         self.canvas.set_socketserver(self)

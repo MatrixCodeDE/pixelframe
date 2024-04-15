@@ -77,11 +77,14 @@ class Display:
         self.screen.blit(img, (0, 0))
 
         if self.show_stats:
-            users: int = self.canvas.socketserver.user_count()
+            users: int = 0 # self.canvas.socketserver.user_count()
             pixel: int = self.canvas.stats.get_pixelcount()
 
             text: str = (
-                f"Host: {self.canvas.socketserver.host} | Port: {self.canvas.socketserver.port} | Users: {users} | Pixels: {pixel}"
+                f"Host: {self.config.connection.host} "
+                f"| Socket: {self.config.connection.ports.socket} "
+                f"| Users: {users} "
+                f"| Pixels: {pixel}"
             )
 
             font = pygame.font.Font("Misc/font.otf", self.config.visuals.statsbar.size)

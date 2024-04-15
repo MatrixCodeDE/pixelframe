@@ -3,14 +3,16 @@ from collections import deque
 from typing import Any, Callable, Optional
 
 import pygame
+from gevent import spawn
 from gevent.time import sleep as gsleep
 from greenlet import GreenletExit
 from PIL import Image
 from pygame import Color, Surface, SurfaceType
 
 from Config.config import Config
+# from Frontend.API.pixelapi import PixelAPI
 from Frontend.display import Display
-from Frontend.sockets import Socketserver
+# from Frontend.sockets import Socketserver
 from Misc.utils import logger
 from Stats.stats import Stats
 
@@ -92,17 +94,17 @@ class Canvas(object):
         kill (bool): The attribute that stops/kills all running processes of the class
         tasks (Queue): The queue of Pixels
         events (dict[str, Callable]): The registered events (usually fired by the Frontend)
-        server (Frontend): The socketserver
     """
 
     config: Config
     _canvas: Image
     display: Display | None
+    # api: PixelAPI | None
+    apitask: Callable
     fps: int = 30
     kill: bool = False
     tasks: Queue
     events: dict[str, Callable]
-    socketserver: Socketserver
     stats: Stats
 
     def __init__(self, config: Config):
@@ -115,7 +117,7 @@ class Canvas(object):
         self.events = {}
         self.pixelcount = 0
 
-        if self.config.frontend.display:
+        if self.config.frontend.display.enabled:
             self.display = Display(self)
         else:
             self.display = None
@@ -130,14 +132,13 @@ class Canvas(object):
         if self.display:
             self.display.stop()
 
-    def set_socketserver(self, socketserver: Socketserver):
+    def set_socketserver(self, socketserver):
         """
         Sets the server (initialized after canvas) and sets/updates the display's socketserver
         Args:
             socketserver (Socketserver): The socketserver
         """
-        self.socketserver = socketserver
-        self.display.set_socketserver(self.socketserver)
+        self.display.set_socketserver(socketserver)
 
     def set_stats(self, stats: Stats):
         """
