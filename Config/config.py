@@ -2,7 +2,7 @@ import json
 import time
 from typing import Any
 
-from Misc.utils import confirm, logger, NoFrontendException
+from Misc.utils import NoFrontendException, confirm, logger
 
 
 class General(object):

@@ -3,11 +3,9 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI
 
-from Config.config import Config
-
-from Frontend.API.website import WebsiteAPI
-
 from Canvas.canvas import Canvas
+from Config.config import Config
+from Frontend.API.website import WebsiteAPI
 
 
 class PixelAPI(FastAPI):
@@ -19,7 +17,7 @@ class PixelAPI(FastAPI):
         super().__init__(
             title=f"{config.general.name} API",
             description="API endpoint for putting pixels on the canvas",
-            version="b0.1"
+            version="b0.1",
         )
         self.canvas = canvas
         self.config = config

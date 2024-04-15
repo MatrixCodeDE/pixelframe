@@ -77,7 +77,7 @@ class Display:
         self.screen.blit(img, (0, 0))
 
         if self.show_stats:
-            users: int = 0 # self.canvas.socketserver.user_count()
+            users: int = 0  # self.canvas.socketserver.user_count()
             pixel: int = self.canvas.stats.get_pixelcount()
 
             text: str = (
