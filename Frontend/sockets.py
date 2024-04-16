@@ -7,7 +7,7 @@ from gevent.lock import RLock
 
 from Canvas.canvas import Canvas
 from Config.config import Config
-from Misc.utils import logger
+from Misc.utils import logger, event_handler
 
 
 class Client:
@@ -141,7 +141,7 @@ class Client:
                     now = time.time()
                     cd = self.cooldown_until - now
                     if cd < 0:
-                        if not self.canvas.trigger(
+                        if not event_handler.trigger(
                             "COMMAND-%s" % command.upper(), self, *arguments
                         ):
                             self.send("Wrong arguments")
@@ -156,7 +156,7 @@ class Client:
                             )
 
                 else:
-                    if not self.canvas.trigger(
+                    if not event_handler.trigger(
                         "COMMAND-%s" % command.upper(), self, *arguments
                     ):
                         self.send("Wrong arguments")

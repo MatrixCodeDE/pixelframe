@@ -32,13 +32,22 @@ class Api:
         self.enabled = enabled
 
 
+class Sockets:
+    enabled: bool
+
+    def __init__(self, enabled: bool):
+        self.enabled = enabled
+
+
 class Frontend:
     display: Display
     api: Api
+    sockets: Sockets
 
-    def __init__(self, display: dict, api: dict):
+    def __init__(self, display: dict, api: dict, sockets: dict):
         self.display = Display(**display)
         self.api = Api(**api)
+        self.sockets = Sockets(**sockets)
         if not self.display.enabled and not self.api.enabled:
             raise NoFrontendException()
 

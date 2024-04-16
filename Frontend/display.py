@@ -7,23 +7,23 @@ from gevent.time import sleep as gsleep
 from PIL.Image import Image
 from pygame import Surface, SurfaceType
 
-from Misc.utils import logger
+from Canvas.canvas import Canvas
+from Config.config import Config
+from Misc.Template.pixelmodule import PixelModule
+from Misc.utils import logger, event_handler
 
 
-class Display:
-    config: Optional["Config"]
-    canvas: Optional["Canvas"]
-    socketserver: Optional["Socketserver"]
-
+class Display(PixelModule):
+    config: Config
+    canvas: Canvas
     screen: Surface | SurfaceType | None
-    kill: bool
     loop_routine: Greenlet
     show_stats: bool
 
-    def __init__(self, canvas: Optional["Canvas"]):
+    def __init__(self, canvas: Canvas):
+        super().__init__("CANVAS")
         self.canvas = canvas
         self.config = canvas.config
-        self.kill = False
         self.show_stats = self.config.visuals.statsbar.enabled
         pygame.init()
         pygame.mixer.quit()
@@ -33,36 +33,37 @@ class Display:
 
         self.register_events()
 
-        self.loop_routine = spawn(self.loop)
-
-    def set_socketserver(self, socketserver: Optional["Socketserver"]) -> None:
-        self.socketserver = socketserver
-
     def register_events(self):
 
-        logger.info("Registering events for 'DISPLAY'")
+        logger.info("Registering events for " + self.name)
 
-        @self.canvas.register("KEYDOWN-s")
+        super().register_events()
+
+        @event_handler.register("KEYDOWN-s")
         def on_keydown_s(*args, **kwargs):
             self.show_stats = not self.show_stats
             logger.info(
                 f"{'Showing' if self.show_stats else 'Hiding'} stats on the screen"
             )
 
+        @event_handler.register("DISPLAY-exit")
+        def on_exit(*args, **kwargs):
+            self.stop()
+
         logger.info("Successfully registered events for 'DISPLAY'")
 
     def loop(self):
-        updates = 1.0 / 10
+        updates = 1.0 / self.config.frontend.display.fps
 
-        while not self.kill:
+        while self.running:
             start = time.time()
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.type == pygame.QUIT:
-                        self.canvas.trigger("stop")
+                        event_handler.trigger("stop")
                         return
                     elif event.type == pygame.KEYDOWN:
-                        self.canvas.trigger("KEYDOWN-" + event.unicode)
+                        event_handler.trigger("KEYDOWN-" + event.unicode)
 
             self.render()
 
@@ -107,6 +108,6 @@ class Display:
         pygame.display.update()
 
     def stop(self):
-        self.kill = True
+        self.running = False
         pygame.mixer.quit()
         pygame.quit()

@@ -9,6 +9,9 @@
     },
     "api": {
       "enabled": true
+    },
+    "sockets": {
+      "enabled": true
     }
   },
   "connection": {

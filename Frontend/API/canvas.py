@@ -1,15 +1,12 @@
 import time
 from io import BytesIO
-from typing import Optional
 
 from PIL.Image import Image
-from fastapi import APIRouter, Path, HTTPException
-from pydantic import Field
+from fastapi import APIRouter, HTTPException
 from starlette.responses import StreamingResponse
 
-from Canvas.canvas import Canvas, Pixel
+from Canvas.canvas import Canvas
 from Config.config import Config
-from Frontend.API.models.canvasmodels import CanvasRequest
 
 
 class CanvasAPI:

@@ -8,9 +8,10 @@ from Canvas.canvas import Canvas
 from Config.config import Config
 from Frontend.API.canvas import CanvasAPI
 from Frontend.API.website import WebsiteAPI
+from Misc.Template.pixelmodule import PixelModule
 
 
-class PixelAPI(FastAPI):
+class PixelAPI(FastAPI, PixelModule):
 
     canvas: Canvas
     config: Config

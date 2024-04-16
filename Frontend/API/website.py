@@ -13,6 +13,6 @@ class WebsiteAPI:
     def register_routes(self):
         @self.router.get("/", response_class=HTMLResponse)
         def get_website():
-            with open("Frontend/API/webtemp.html", "r") as temp:
+            with open("Misc/Template/webtemp.html", "r") as temp:
                 web = temp.read()
             return web

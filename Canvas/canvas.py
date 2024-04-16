@@ -8,7 +8,8 @@ from greenlet import GreenletExit
 from PIL import Image
 
 from Config.config import Config
-from Misc.utils import logger
+from Misc.Template.pixelmodule import PixelModule
+from Misc.utils import event_handler
 from Stats.stats import Stats
 
 
@@ -79,43 +80,30 @@ class Queue:
             raise StopIteration
 
 
-class Canvas(object):
+class Canvas(PixelModule):
     """
     The canvas object
     Attributes:
         config (Config): The configuration object
         _canvas (Canvas): The canvas
         fps (int): The framerate for visual updates
-        kill (bool): The attribute that stops/kills all running processes of the class
         tasks (Queue): The queue of Pixels
-        events (dict[str, Callable]): The registered events (usually fired by the Frontend)
     """
 
     config: Config
     _canvas: Image
-    # api: PixelAPI | None
-    apitask: Callable
     fps: int = 30
-    kill: bool = False
     tasks: Queue
-    events: dict[str, Callable]
     stats: Stats
 
     def __init__(self, config: Config):
         """
         Initializes the canvas
         """
+        super().__init__("CANVAS")
         self.config = config
         self._canvas = Image.new("RGB", self.config.visuals.size.get_size())
         self.tasks = Queue()
-        self.events = {}
-        self.pixelcount = 0
-
-        if self.config.frontend.display.enabled:
-            from Frontend.display import Display
-            self.display = Display(self)
-        else:
-            self.display = None
 
     def stop(self):
         """
@@ -123,9 +111,7 @@ class Canvas(object):
         Returns:
             None
         """
-        self.kill = True
-        if self.display:
-            self.display.stop()
+        super().stop()
 
     def set_stats(self, stats: Stats):
         """
@@ -234,10 +220,10 @@ class Canvas(object):
         """
         updates = 1.0 / self.fps
 
-        while not self.kill:
+        while self.running:
             start = time.time()
 
-            self.trigger("update")
+            event_handler.trigger("CANVAS-update")
 
             end = time.time() - start
             gsleep(max(updates - end, 0))
@@ -250,52 +236,6 @@ class Canvas(object):
         """
         for pixel in self.tasks:
             self.put_pixel(pixel)
-
-    def register(self, name: str) -> Any:
-        """
-        Registers a new event for the canvas
-        Args:
-            name (str): the name for fire the event
-
-        Returns:
-            The decorator
-        """
-
-        logger.info("Registered event: " + name)
-
-        def decorator(func: Callable) -> Any:
-            """
-            The decorator for registering events
-            Args:
-                func (Callable): The function that should be fired
-
-            Returns:
-                The function
-            """
-            self.events[name] = func
-            return func
-
-        return decorator
-
-    def trigger(self, name: str, *args, **kwargs) -> None:
-        """
-        Fires an existing event
-        Args:
-            name (str): The name of the event
-            *args: Variable length argument list
-            **kwargs: Arbitrary keyword arguments
-
-        Returns:
-            None
-        """
-        if name in self.events:
-            try:
-                self.events[name](self, *args, **kwargs)
-                return True
-            except GreenletExit:
-                raise
-            except:
-                logger.exception("Error in callback for %r", name)
 
     def get_canvas(self) -> Image:
         """
@@ -311,4 +251,4 @@ class Canvas(object):
         Returns:
             If the process is alive
         """
-        return not self.kill
+        return self.running

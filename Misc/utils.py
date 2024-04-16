@@ -1,7 +1,11 @@
 import logging
 
+from Misc.eventhandler import EventHandler
+
 logger = logging.getLogger("pixelframe")
 logging.basicConfig(level=logging.INFO)
+
+event_handler = EventHandler()
 
 
 class NoFrontendException(Exception):

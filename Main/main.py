@@ -1,17 +1,14 @@
 import argparse
-import logging
 
 import gevent.monkey
 
 gevent.monkey.patch_all()
-import uvicorn
 from gevent import spawn
 
 from Canvas.canvas import Canvas
 from Config.config import Config
-from Frontend.API.pixelapi import start_api
-from Frontend.sockets import Client, Socketserver
-from Misc.utils import logger
+from Frontend.sockets import Client
+from Misc.utils import logger, event_handler
 from Stats.stats import Stats
 
 
@@ -28,15 +25,15 @@ def register_events(canvas: Canvas, config: Config) -> None:
 
     logger.info("Registering events")
 
-    @canvas.register("update")
+    @event_handler.register("update")
     def update(canvas: Canvas, *args, **kwargs):
         canvas.update()
 
-    @canvas.register("stop")
+    @event_handler.register("stop")
     def stop(canvas: Canvas):
         canvas.stop()
 
-    @canvas.register("COMMAND-PX")
+    @event_handler.register("COMMAND-PX")
     def add_pixel(canvas: Canvas, client: Client, x, y, color=None):
         x, y = int(x), int(y)
         if color:
@@ -59,7 +56,7 @@ def register_events(canvas: Canvas, config: Config) -> None:
             r, g, b = canvas.get_pixel(x, y)
             client.send("PX %d %d %02x%02x%02x" % (x, y, r, g, b))
 
-    @canvas.register("COMMAND-HELP")
+    @event_handler.register("COMMAND-HELP")
     def on_help(canvas: Canvas, client: Client):
         help = "Commands:\n"
         help += ">>> HELP\n"
@@ -71,7 +68,7 @@ def register_events(canvas: Canvas, config: Config) -> None:
         help += f"Pixel per second per user: {client.pps}"
         client.send(help)
 
-    @canvas.register("COMMAND-STATS")
+    @event_handler.register("COMMAND-STATS")
     def callback(canvas: Canvas, client: Client):
         d = canvas.get_pixel_color_count()
         import operator
@@ -82,23 +79,23 @@ def register_events(canvas: Canvas, config: Config) -> None:
             dString += str(k) + ":\t" + str(v) + "\n"
         client.send("Current pixel color distribution:\n" + dString)
 
-    # @canvas.register("COMMAND-TEXT")
+    # @event_handler.register("COMMAND-TEXT")
     def on_text(canvas: Canvas, client: Client, x, y, *words):
         x, y = int(x), int(y)
         text = " ".join(words)[:200]
         canvas.text(x, y, text, delay=1)
 
-    @canvas.register("COMMAND-SIZE")
+    @event_handler.register("COMMAND-SIZE")
     def on_size(canvas: Canvas, client: Client):
         client.send("SIZE %d %d" % canvas.get_size())
 
-    @canvas.register("COMMAND-QUIT")
+    @event_handler.register("COMMAND-QUIT")
     def on_quit(canvas: Canvas, client: Client):
         client.disconnect()
 
     if config.game.godmode.enabled:
 
-        @canvas.register("COMMAND-GODMODE")
+        @event_handler.register("COMMAND-GODMODE")
         def on_quit(canvas: Canvas, client: Client, mode):
             if mode == "on":
                 client.set_pps(config.game.godmode.pps)
@@ -131,33 +128,39 @@ def main():
     config = Config(args.configfile)
 
     canvas = Canvas(config)
+    main_loop = spawn(canvas.loop)
+    coroutines = [main_loop]
+
+    if config.frontend.display.enabled:
+        from Frontend.display import Display
+        display = Display(canvas)
+        display_loop = spawn(display.loop)
+        coroutines.append(display_loop)
 
     register_events(canvas, config)
 
     logger.info("Starting Canvas Loop")
-    main_loop = spawn(canvas.loop)
 
-    server = Socketserver(canvas, config)
+    if config.frontend.sockets.enabled:
+        from Frontend.sockets import Socketserver
+        server = Socketserver(canvas, config)
+        server_loop = spawn(server.loop)
+        coroutines.append(server_loop)
 
-    api = spawn(start_api, canvas, config)
-
-    logger.info(f"Starting Sockerserver at {server.host}:{server.port}")
-    server_loop = spawn(server.loop)
+    if config.frontend.api.enabled:
+        from Frontend.API.pixelapi import start_api
+        api = spawn(start_api, canvas, config)
+        coroutines.append(api)
 
     stats = Stats(canvas, server)
 
     try:
-        gevent.joinall([
-            server_loop,
-            api,
-            main_loop
-        ])
+        gevent.joinall(coroutines)
     except KeyboardInterrupt:
         print("Exitting...")
     canvas.stop()
-    server.stop()
-    main_loop.kill()
-    server_loop.kill()
+    for coro in coroutines:
+        coro.kill()
 
 
 if __name__ == "__main__":
