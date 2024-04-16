@@ -5,3 +5,4 @@ pillow>=10.3.0
 fastapi>=0.110.1
 uvicorn>=0.29.0
 starlette>=0.37.2
+pydantic>=2.7.0

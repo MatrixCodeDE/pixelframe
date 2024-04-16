@@ -1,6 +1,9 @@
 import argparse
 import logging
 
+import gevent.monkey
+
+gevent.monkey.patch_all()
 import uvicorn
 from gevent import spawn
 
@@ -53,8 +56,8 @@ def register_events(canvas: Canvas, config: Config) -> None:
             canvas.add_pixel(x, y, r, g, b, a)
             client.send("PX Success")
         else:
-            r, g, b, a = canvas.get_pixel(x, y)
-            client.send("PX %d %d %02x%02x%02x%02x" % (x, y, r, g, b, a))
+            r, g, b = canvas.get_pixel(x, y)
+            client.send("PX %d %d %02x%02x%02x" % (x, y, r, g, b))
 
     @canvas.register("COMMAND-HELP")
     def on_help(canvas: Canvas, client: Client):
@@ -144,9 +147,11 @@ def main():
     stats = Stats(canvas, server)
 
     try:
-        server_loop.start()
-        api.start()
-        main_loop.join()
+        gevent.joinall([
+            server_loop,
+            api,
+            main_loop
+        ])
     except KeyboardInterrupt:
         print("Exitting...")
     canvas.stop()

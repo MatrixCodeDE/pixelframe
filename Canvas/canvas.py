@@ -2,16 +2,13 @@ import time
 from collections import deque
 from typing import Any, Callable, Optional
 
-import pygame
 from gevent import spawn
 from gevent.time import sleep as gsleep
 from greenlet import GreenletExit
 from PIL import Image
-from pygame import Color, Surface, SurfaceType
 
 from Config.config import Config
 # from Frontend.API.pixelapi import PixelAPI
-from Frontend.display import Display
 # from Frontend.sockets import Socketserver
 from Misc.utils import logger
 from Stats.stats import Stats
@@ -36,7 +33,7 @@ class Pixel(object):
         self.a = a
 
     def get(self):
-        """Returns the Pixel formatted for pygame"""
+        """Returns the Pixel formatted for Pillow"""
         return (self.x, self.y), (self.r, self.g, self.b, self.a)
 
 
@@ -98,7 +95,6 @@ class Canvas(object):
 
     config: Config
     _canvas: Image
-    display: Display | None
     # api: PixelAPI | None
     apitask: Callable
     fps: int = 30
@@ -112,12 +108,13 @@ class Canvas(object):
         Initializes the canvas
         """
         self.config = config
-        self._canvas = Image.new("RGBA", self.config.visuals.size.get_size())
+        self._canvas = Image.new("RGB", self.config.visuals.size.get_size())
         self.tasks = Queue()
         self.events = {}
         self.pixelcount = 0
 
         if self.config.frontend.display.enabled:
+            from Frontend.display import Display
             self.display = Display(self)
         else:
             self.display = None
@@ -138,7 +135,8 @@ class Canvas(object):
         Args:
             socketserver (Socketserver): The socketserver
         """
-        self.display.set_socketserver(socketserver)
+        if self.display:
+            self.display.set_socketserver(socketserver)
 
     def set_stats(self, stats: Stats):
         """
@@ -148,7 +146,13 @@ class Canvas(object):
         """
         self.stats = stats
 
-    def get_pixel(self, x: int, y: int) -> Color:
+    def pixel_in_bounds(self, x: int, y: int) -> bool:
+        """
+        Checks if the pixel is within the image
+        """
+        return 0 <= x <= self._canvas.width and 0 <= y <= self._canvas.height
+
+    def get_pixel(self, x: int, y: int) -> Any:
         """
         Gets a single pixel from the canvas
         Args:
@@ -158,7 +162,10 @@ class Canvas(object):
         Returns:
             Color
         """
-        return self._canvas.getpixel((x, y))
+        if self.pixel_in_bounds(x, y):
+            return self._canvas.getpixel((x, y))
+        else:
+            return None
 
     def add_pixel(self, x: int, y: int, r: int, g: int, b: int, a: int = 255) -> None:
         """

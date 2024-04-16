@@ -1,7 +1,7 @@
 import logging
 
 logger = logging.getLogger("pixelframe")
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 class NoFrontendException(Exception):

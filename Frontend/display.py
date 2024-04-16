@@ -15,7 +15,7 @@ class Display:
     canvas: Optional["Canvas"]
     socketserver: Optional["Socketserver"]
 
-    screen: Surface | SurfaceType
+    screen: Surface | SurfaceType | None
     kill: bool
     loop_routine: Greenlet
     show_stats: bool

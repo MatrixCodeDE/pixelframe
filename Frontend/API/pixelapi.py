@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from Canvas.canvas import Canvas
 from Config.config import Config
+from Frontend.API.canvas import CanvasAPI
 from Frontend.API.website import WebsiteAPI
 
 
@@ -25,7 +26,11 @@ class PixelAPI(FastAPI):
 
 def start_api(canvas: Canvas, config: Config):
     api = PixelAPI(canvas, config)
+
     webapi = WebsiteAPI()
     api.include_router(webapi.router)
+
+    canvasapi = CanvasAPI(canvas, config)
+    api.include_router(canvasapi.router)
 
     uvicorn.run(api, host=config.connection.host, port=config.connection.ports.api)
