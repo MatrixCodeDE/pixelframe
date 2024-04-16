@@ -6,5 +6,16 @@
 </head>
 <body>
     Template
+    <img id="canvas" src="" alt="Canvas" width="90%">
+
+    <script>
+        function refreshImage() {
+            let img = document.getElementById('canvas');
+            let date = new Date().getTime();
+            img.src = "http://0.0.0.0:8000/canvas/?" + date;
+        }
+
+        setInterval(refreshImage, 1000);
+    </script>
 </body>
 </html>

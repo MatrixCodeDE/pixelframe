@@ -224,7 +224,6 @@ class Socketserver(object):
         self.socket.bind((self.host, self.port))
         self.socket.listen()
         self.clients = {}
-        self.canvas.set_socketserver(self)
 
     def stop(self) -> None:
         """

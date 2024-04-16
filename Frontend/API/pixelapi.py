@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 import uvicorn
@@ -33,4 +34,4 @@ def start_api(canvas: Canvas, config: Config):
     canvasapi = CanvasAPI(canvas, config)
     api.include_router(canvasapi.router)
 
-    uvicorn.run(api, host=config.connection.host, port=config.connection.ports.api)
+    uvicorn.run(api, host=config.connection.host, port=config.connection.ports.api, log_level=logging.WARN)

@@ -8,8 +8,6 @@ from greenlet import GreenletExit
 from PIL import Image
 
 from Config.config import Config
-# from Frontend.API.pixelapi import PixelAPI
-# from Frontend.sockets import Socketserver
 from Misc.utils import logger
 from Stats.stats import Stats
 
@@ -128,15 +126,6 @@ class Canvas(object):
         self.kill = True
         if self.display:
             self.display.stop()
-
-    def set_socketserver(self, socketserver):
-        """
-        Sets the server (initialized after canvas) and sets/updates the display's socketserver
-        Args:
-            socketserver (Socketserver): The socketserver
-        """
-        if self.display:
-            self.display.set_socketserver(socketserver)
 
     def set_stats(self, stats: Stats):
         """

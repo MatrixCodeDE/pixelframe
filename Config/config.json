@@ -4,7 +4,7 @@
   },
   "frontend": {
     "display": {
-      "enabled": true,
+      "enabled": false,
       "fps": 10
     },
     "api": {

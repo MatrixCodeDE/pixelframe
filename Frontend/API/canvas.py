@@ -1,3 +1,4 @@
+import time
 from io import BytesIO
 from typing import Optional
 
@@ -45,11 +46,14 @@ class CanvasAPI:
             response_class=StreamingResponse
         )
         def get_canvas():
-            img = self.get_canvas_bytes("webp", 100)
-            return StreamingResponse(
+            img = self.get_canvas_bytes("webp", 50)
+            resp = StreamingResponse(
                 content=img,
                 media_type=f"image/webp"
             )
+            resp.headers["Cache-Control"] = "no-cache"
+            resp.headers['Last-Modified'] = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
+            return resp
 
         @self.router.get("/size")
         def get_size():
