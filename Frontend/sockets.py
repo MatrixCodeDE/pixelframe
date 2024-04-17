@@ -7,6 +7,7 @@ from gevent.lock import RLock
 
 from Canvas.canvas import Canvas
 from Config.config import Config
+from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import event_handler, logger
 
 
@@ -41,7 +42,7 @@ class Client:
     timeout: bool
 
     def __init__(
-        self, canvas: Optional["Canvas"], ip: str, port: int, pps: int | float = 30
+        self, canvas: Optional["Canvas"], ip: str, port: int, pps: int | float = 30, super_prefix: str = "SOCKSERV"
     ) -> None:
         """
         Initializes the client object
@@ -51,6 +52,7 @@ class Client:
             port (int): The port of the client
             pps (int): The number of pixels a client can set per second
         """
+        self.super_prefix = super_prefix
         self.canvas = canvas
         self.ip = ip
         self.port = port
@@ -142,7 +144,7 @@ class Client:
                     cd = self.cooldown_until - now
                     if cd < 0:
                         if not event_handler.trigger(
-                            "COMMAND-%s" % command.upper(), self, *arguments
+                            f"{self.super_prefix}-%s" % command.upper(), self, *arguments
                         ):
                             self.send("Wrong arguments")
                         self.cooldown_until = now + self.cooldown
@@ -157,7 +159,7 @@ class Client:
 
                 else:
                     if not event_handler.trigger(
-                        "COMMAND-%s" % command.upper(), self, *arguments
+                        f"{self.super_prefix}-%s" % command.upper(), self, *arguments
                     ):
                         self.send("Wrong arguments")
         finally:
@@ -186,7 +188,7 @@ class Client:
                 logger.info(f"Client disconnected: {self.ip}:{self.port}")
 
 
-class Socketserver(object):
+class Socketserver(PixelModule):
     """
     The socketserver for handling client sockets
     Attributes:
@@ -197,7 +199,6 @@ class Socketserver(object):
         socket(socket): The socket server
         clients (dict[str, Client]): The list of clients
         cpps (int | float): Refers to default pps of the clients
-        kill (bool): The attribute that stops/kills all running processes of the class
     """
 
     config: Config
@@ -207,7 +208,6 @@ class Socketserver(object):
     socket: socket3
     clients: dict[str, Client]
     cpps: int | float
-    kill: bool = False
 
     def __init__(self, canvas: Canvas, config: Config) -> None:
         """
@@ -224,6 +224,7 @@ class Socketserver(object):
         self.socket.bind((self.host, self.port))
         self.socket.listen()
         self.clients = {}
+        super().__init__("SOCKSERV")
 
     def stop(self) -> None:
         """
@@ -234,13 +235,13 @@ class Socketserver(object):
         clients = self.clients.values()
         for client in clients:
             client.stop()
-        self.kill = True
 
     def loop(self):
         """
         The loop for handling the client connections
         """
-        while not self.kill:
+        logger.info(f"Starting Process: {self.name}.loop")
+        while self.running:
             sock, addr = self.socket.accept()
             ip, port = addr
 
@@ -263,3 +264,71 @@ class Socketserver(object):
         """
         connected = [client for client in self.clients.values() if client.connected]
         return len(connected)
+
+    def register_events(self):
+        super().register_events()
+
+        @event_handler.register(f"{self.name}-PX")
+        def add_pixel(canvas: Canvas, client: Client, x, y, color=None):
+            x, y = int(x), int(y)
+            if color:
+                c = int(color, 16)
+                if len(color) == 6:
+                    r = (c & 0xFF0000) >> 16
+                    g = (c & 0x00FF00) >> 8
+                    b = c & 0x0000FF
+                    a = 0xFF
+                elif len(color) == 8:
+                    r = (c & 0xFF000000) >> 24
+                    g = (c & 0x00FF0000) >> 16
+                    b = (c & 0x0000FF00) >> 8
+                    a = c & 0x000000FF
+                else:
+                    return
+                canvas.add_pixel(x, y, r, g, b, a)
+                client.send("PX Success")
+            else:
+                r, g, b = canvas.get_pixel(x, y)
+                client.send("PX %d %d %02x%02x%02x" % (x, y, r, g, b))
+
+        @event_handler.register(f"{self.name}-HELP")
+        def on_help(canvas: Canvas, client: Client):
+            help = "Commands:\n"
+            help += ">>> HELP\n"
+            help += ">>> STATS\n"
+            help += ">>> SIZE\n"
+            help += ">>> QUIT\n"
+            # help += ">>> TEXT x y text (currently disabled)\n"
+            help += ">>> PX x y [RRGGBB[AA]]\n"
+            help += f"Pixel per second per user: {client.pps}"
+            client.send(help)
+
+        @event_handler.register(f"{self.name}-STATS")
+        def callback(canvas: Canvas, client: Client):
+            d = canvas.get_pixel_color_count()
+            import operator
+
+            dSorted = sorted(d.items(), key=operator.itemgetter(1), reverse=True)
+            dString = ""
+            for k, v in dSorted:
+                dString += str(k) + ":\t" + str(v) + "\n"
+            client.send("Current pixel color distribution:\n" + dString)
+
+        @event_handler.register(f"{self.name}-SIZE")
+        def on_size(canvas: Canvas, client: Client):
+            client.send("SIZE %d %d" % canvas.get_size())
+
+        @event_handler.register(f"{self.name}-EXIT")
+        def on_quit(canvas: Canvas, client: Client):
+            client.disconnect()
+
+        if self.config.game.godmode.enabled:
+            @event_handler.register(f"{self.name}-GODMODE")
+            def on_quit(canvas: Canvas, client: Client, mode):
+                if mode == "on":
+                    client.set_pps(self.config.game.godmode.pps)
+                    client.send("You are now god (%d pps)" % client.pps)
+                else:
+                    client.set_pps(self.config.game.pps)
+                    client.send("You are no longer god (%d pps)" % client.pps)
+

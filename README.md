@@ -14,13 +14,14 @@ Since this is a rewrite of the entire original project, I also added some featur
 
 PyGame isn't exactly a new feature, but its optional now (Web Service coming soon). The new base of this project is Pillow. Also, you can display a stats bar for connection details and basic stats of the canvas when using in public.
 
-### Website (Coming Soon)
+### Webinterface (Coming Soon)
 
 Can display the current canvas
 
-### API (Coming Soon)
+### API
 
-Based on FastAPI, can update pixels and also hosting the [Website](#website-coming-soon)
+Based on FastAPI, can update pixels and also hosting the [Webinterface](#webinterface-coming-soon) \
+Usage [Coming Soon]
 
 ### Interactive Sockets
 
@@ -41,6 +42,7 @@ PixelFrame uses the base of the Pixelflut Protocol for its commands. Therefore, 
 * `PX <x> <y> <rrggbb(aa)>`: Draw a single pixel at position (x, y) with the specified hex color code.
   If the color code contains an alpha channel value, it is blended with the current color of the pixel.
 * `STATS`: Returns the pixel color distribution of the canvas (except black) ordered by pixel frequency.
+* `EXIT`: Just like the SSH-command `exit`, disconnect from the server
 
 Example:
 

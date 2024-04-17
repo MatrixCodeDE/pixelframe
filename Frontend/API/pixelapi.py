@@ -9,6 +9,7 @@ from Config.config import Config
 from Frontend.API.canvas import CanvasAPI
 from Frontend.API.website import WebsiteAPI
 from Misc.Template.pixelmodule import PixelModule
+from Misc.utils import logger
 
 
 class PixelAPI(FastAPI, PixelModule):
@@ -34,6 +35,8 @@ def start_api(canvas: Canvas, config: Config):
 
     canvasapi = CanvasAPI(canvas, config)
     api.include_router(canvasapi.router)
+
+    logger.info(f"Starting Process: PixelAPI.fastAPI")
 
     uvicorn.run(
         api,

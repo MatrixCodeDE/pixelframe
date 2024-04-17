@@ -21,7 +21,6 @@ class Display(PixelModule):
     show_stats: bool
 
     def __init__(self, canvas: Canvas):
-        super().__init__("CANVAS")
         self.canvas = canvas
         self.config = canvas.config
         self.show_stats = self.config.visuals.statsbar.enabled
@@ -30,12 +29,9 @@ class Display(PixelModule):
         pygame.display.set_caption("PixelFrame")
         pygame.font.init()
         self.screen = pygame.display.set_mode(self.config.visuals.size.get_size())
-
-        self.register_events()
+        super().__init__("CANVAS")
 
     def register_events(self):
-
-        logger.info("Registering events for " + self.name)
 
         super().register_events()
 
@@ -50,9 +46,8 @@ class Display(PixelModule):
         def on_exit(*args, **kwargs):
             self.stop()
 
-        logger.info("Successfully registered events for 'DISPLAY'")
-
     def loop(self):
+        logger.info(f"Starting Process: {self.name}.loop")
         updates = 1.0 / self.config.frontend.display.fps
 
         while self.running:

@@ -1,6 +1,7 @@
 import time
 
 import numpy as np
+from PIL import Image
 
 from Config.config import Config
 from Misc.utils import rgb_to_hex, time_to_np
@@ -109,3 +110,7 @@ class Heart:
             pixels[y][x] = rgb_to_hex(r, g, b)
 
         return pixels
+
+    def create_image(self):
+        image = Image.fromarray(self.data[:, :, :3])
+        return image

@@ -10,7 +10,7 @@ from PIL import Image
 from Canvas.heart import Heart
 from Config.config import Config
 from Misc.Template.pixelmodule import PixelModule
-from Misc.utils import event_handler
+from Misc.utils import event_handler, logger
 from Stats.stats import Stats
 
 
@@ -102,11 +102,11 @@ class Canvas(PixelModule):
         """
         Initializes the canvas
         """
-        super().__init__("CANVAS")
         self.config = config
         self._canvas = Image.new("RGB", self.config.visuals.size.get_size())
         self._heart = Heart(self.config)
         self.tasks = Queue()
+        super().__init__("CANVAS")
 
     def stop(self):
         """
@@ -224,6 +224,7 @@ class Canvas(PixelModule):
         """
         The loop for updating the heart's timestamp
         """
+        logger.info(f"Starting Process: {self.name}.heart_loop")
         while self.running:
             self._heart.update_timestamp()
             gsleep(1)
@@ -235,6 +236,7 @@ class Canvas(PixelModule):
         """
         The loop for controlling the canvas
         """
+        logger.info(f"Starting Process: {self.name}.loop")
         updates = 1.0 / self.fps
         while self.running:
             start = time.time()
@@ -258,7 +260,7 @@ class Canvas(PixelModule):
         Returns:
             Copy of the canvas
         """
-        return self._canvas.copy()
+        return self._heart.create_image()
 
     def is_alive(self) -> bool:
         """
@@ -271,6 +273,6 @@ class Canvas(PixelModule):
     def register_events(self):
         super().register_events()
 
-        @event_handler.register("CANVAS-update")
-        def update(canvas: Canvas, *args, **kwargs):
+        @event_handler.register(f"{self.name}-update")
+        def update(*args, **kwargs):
             self.update()
