@@ -105,7 +105,7 @@ class Heart:
             if y not in pixels:
                 pixels[y] = {}
 
-            r, g, b = map(int, colors[y, x, :3])
+            r, g, b = colors[y, x, :3]
             pixels[y][x] = rgb_to_hex(r, g, b)
 
         return pixels

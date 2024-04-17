@@ -35,7 +35,7 @@ def np_to_time(ts: np.ndarray) -> int:
     return int.from_bytes(ts_bytes, byteorder="big")
 
 
-def rgb_to_hex(r: int, g: int, b: int, a: int | None = None) -> str:
+def rgb_to_hex(r: int | np.uint8, g: int | np.uint8, b: int | np.uint8, a: int | np.uint8 | None = None) -> str:
     if a:
         return "%02x%02x%02x%02x" % (r, g, b, a)
     else:
