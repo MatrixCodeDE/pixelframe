@@ -8,6 +8,7 @@ class PixelModule:
     def __init__(self, name):
         self.name = name
         self.running = True
+        self.register_events()
 
     def register_events(self):
         @event_handler.register(self.name + "-exit")

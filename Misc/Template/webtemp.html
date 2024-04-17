@@ -7,12 +7,17 @@
 <body>
     Template
     <img id="canvas" src="" alt="Canvas" width="90%">
+    <button onclick="to_docs()">Docs</button>
 
     <script>
         function refreshImage() {
             let img = document.getElementById('canvas');
             let date = new Date().getTime();
             img.src = "http://0.0.0.0:8000/canvas/?" + date;
+        }
+
+        function to_docs(){
+            window.location.href = "/docs";
         }
 
         setInterval(refreshImage, 1000);

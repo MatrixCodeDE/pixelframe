@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 
 from Misc.eventhandler import EventHandler
@@ -32,3 +33,27 @@ def time_to_np(ts: int | float) -> np.ndarray:
 def np_to_time(ts: np.ndarray) -> int:
     ts_bytes = bytes(ts)
     return int.from_bytes(ts_bytes, byteorder="big")
+
+
+def rgb_to_hex(r: int, g: int, b: int, a: int | None = None) -> str:
+    if a:
+        return "%02x%02x%02x%02x" % (r, g, b, a)
+    else:
+        return "%02x%02x%02x" % (r, g, b)
+
+
+def hex_to_rgb(hexa: str) -> tuple[int, int, int] | tuple[int, int, int, int] | None:
+    c = int(hexa, 16)
+    if len(hexa) == 6:
+        r = (c & 0xFF0000) >> 16
+        g = (c & 0x00FF00) >> 8
+        b = c & 0x0000FF
+        return r, g, b
+    elif len(hexa) == 8:
+        r = (c & 0xFF000000) >> 24
+        g = (c & 0x00FF0000) >> 16
+        b = (c & 0x0000FF00) >> 8
+        a = c & 0x000000FF
+        return r, g, b, a
+    else:
+        return None

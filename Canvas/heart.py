@@ -1,8 +1,9 @@
 import time
 
-from Config.config import Config
-from Misc.utils import time_to_np
 import numpy as np
+
+from Config.config import Config
+from Misc.utils import rgb_to_hex, time_to_np
 
 
 class Heart:
@@ -23,6 +24,7 @@ class Heart:
     ]
     y and x are swapped so rows come before columns, rendered left-right, then top-bottom respectively
     """
+
     config: Config
     data: np.ndarray
     timestamp: np.ndarray
@@ -31,12 +33,8 @@ class Heart:
         self.config = config
 
         self.data = np.zeros(
-            (
-                self.config.visuals.size.height,
-                self.config.visuals.size.width,
-                7
-            ),
-            dtype=np.uint8
+            (self.config.visuals.size.height, self.config.visuals.size.width, 7),
+            dtype=np.uint8,
         )
 
         self.timestamp = np.zeros(4, dtype=np.uint8)
@@ -84,70 +82,30 @@ class Heart:
 
         Output format: {
             y: {
-                x: {
-                    "r": int
-
-                    "g": int
-
-                    "b": int
-                }
+                x: str (rgb as hex)
             }
         }
         """
         if isinstance(ts, float):
             ts = int(ts)
-        timestamps = self.data[:, :, 3].view(np.uint32)
+        timestamps = (
+            np.frombuffer(self.data[:, :, 3:].tobytes(), dtype=np.uint32)
+            .astype(np.uint32)
+            .byteswap(True)
+        )
         colors = self.data[:, :, :3]
 
         filtered = np.where((timestamps < ts) & (timestamps != 0))
-
-        rgb_vals = colors[filtered]
+        coords = np.unravel_index(filtered[0], self.data.shape[:2])
 
         pixels = {}
-
-        for y, x in zip(*filtered):
+        for y, x in zip(*coords):
+            y = int(y)
+            x = int(x)
             if y not in pixels:
                 pixels[y] = {}
-            if x not in pixels[y]:
-                pixels[y][x] = {}
 
-            pixels[y][x]["r"] = rgb_vals[y, x, 0]
-            pixels[y][x]["g"] = rgb_vals[y, x, 1]
-            pixels[y][x]["b"] = rgb_vals[y, x, 2]
-
-        return pixels
-
-    def all_pixels(self) -> dict:
-        """
-        Returns all pixels of the canvas
-        Returns:
-            A dictionary with the pixels
-
-        Output format: {
-            y: {
-                x: {
-                    "r": int
-
-                    "g": int
-
-                    "b": int
-                }
-            }
-        }
-        """
-        colors = self.data[:, :, :3]
-
-        pixels = {}
-
-        for y in range(self.config.visuals.size.height):
-            for x in range(self.config.visuals.size.width):
-                if y not in pixels:
-                    pixels[y] = {}
-                if x not in pixels[y]:
-                    pixels[y][x] = {}
-
-                pixels[y][x]["r"] = colors[y, x, 0]
-                pixels[y][x]["g"] = colors[y, x, 1]
-                pixels[y][x]["b"] = colors[y, x, 2]
+            r, g, b = map(int, colors[y, x, :3])
+            pixels[y][x] = rgb_to_hex(r, g, b)
 
         return pixels

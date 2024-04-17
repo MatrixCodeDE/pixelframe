@@ -7,6 +7,7 @@ from gevent.time import sleep as gsleep
 from greenlet import GreenletExit
 from PIL import Image
 
+from Canvas.heart import Heart
 from Config.config import Config
 from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import event_handler
@@ -92,6 +93,7 @@ class Canvas(PixelModule):
 
     config: Config
     _canvas: Image
+    _heart: Heart
     fps: int = 30
     tasks: Queue
     stats: Stats
@@ -103,6 +105,7 @@ class Canvas(PixelModule):
         super().__init__("CANVAS")
         self.config = config
         self._canvas = Image.new("RGB", self.config.visuals.size.get_size())
+        self._heart = Heart(self.config)
         self.tasks = Queue()
 
     def stop(self):
@@ -125,7 +128,10 @@ class Canvas(PixelModule):
         """
         Checks if the pixel is within the image
         """
-        return 0 <= x <= self._canvas.width and 0 <= y <= self._canvas.height
+        return (
+            0 <= x <= self.config.visuals.size.width
+            and 0 <= y <= self.config.visuals.size.height
+        )
 
     def get_pixel(self, x: int, y: int) -> Any:
         """
@@ -138,7 +144,7 @@ class Canvas(PixelModule):
             Color
         """
         if self.pixel_in_bounds(x, y):
-            return self._canvas.getpixel((x, y))
+            return self._heart.get_pixel_color(x, y)
         else:
             return None
 
@@ -178,13 +184,13 @@ class Canvas(PixelModule):
         elif pixel.a == 0:
             return
         elif pixel.a == 255:
-            self._canvas.putpixel(coords, color)
+            self._heart.update_pixel(x, y, (r, g, b))
         else:
-            r2, g2, b2, a2 = self._canvas.getpixel(coords)
+            r2, g2, b2 = self._heart.get_pixel_color(x, y)
             r = (r2 * (0xFF - a) + (r * a)) / 0xFF
             g = (g2 * (0xFF - a) + (g * a)) / 0xFF
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
-            self._canvas.putpixel((x, y), (r, g, b))
+            self._heart.update_pixel(x, y, (r, g, b))
         self.stats.add_pixel(x, y)
 
     def get_pixel_color_count(self) -> dict[str, int]:
@@ -214,15 +220,24 @@ class Canvas(PixelModule):
         """
         return self.config.visuals.size.get_size()
 
+    def heart_loop(self) -> None:
+        """
+        The loop for updating the heart's timestamp
+        """
+        while self.running:
+            self._heart.update_timestamp()
+            gsleep(1)
+
+    def ret_heart(self, since):
+        return self._heart.pixel_since(since)
+
     def loop(self) -> None:
         """
         The loop for controlling the canvas
         """
         updates = 1.0 / self.fps
-
         while self.running:
             start = time.time()
-
             event_handler.trigger("CANVAS-update")
 
             end = time.time() - start
@@ -252,3 +267,10 @@ class Canvas(PixelModule):
             If the process is alive
         """
         return self.running
+
+    def register_events(self):
+        super().register_events()
+
+        @event_handler.register("CANVAS-update")
+        def update(canvas: Canvas, *args, **kwargs):
+            self.update()

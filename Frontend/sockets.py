@@ -7,7 +7,7 @@ from gevent.lock import RLock
 
 from Canvas.canvas import Canvas
 from Config.config import Config
-from Misc.utils import logger, event_handler
+from Misc.utils import event_handler, logger
 
 
 class Client:

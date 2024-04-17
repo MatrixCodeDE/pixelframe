@@ -1,8 +1,8 @@
 import time
 from io import BytesIO
 
-from PIL.Image import Image
 from fastapi import APIRouter, HTTPException
+from PIL.Image import Image
 from starlette.responses import StreamingResponse
 
 from Canvas.canvas import Canvas
@@ -15,10 +15,7 @@ class CanvasAPI:
     config: Config
 
     def __init__(self, canvas: Canvas, config: Config):
-        self.router = APIRouter(
-            prefix="/canvas",
-            tags=["canvas"]
-        )
+        self.router = APIRouter(prefix="/canvas", tags=["canvas"])
         self.canvas = canvas
         self.config = config
 
@@ -36,41 +33,39 @@ class CanvasAPI:
         @self.router.get(
             "/",
             responses={
-                200: {
-                    "content": {"image/webp": {}}
-                },
+                200: {"content": {"image/webp": {}}},
             },
-            response_class=StreamingResponse
+            response_class=StreamingResponse,
         )
         def get_canvas():
             img = self.get_canvas_bytes("webp", 50)
-            resp = StreamingResponse(
-                content=img,
-                media_type=f"image/webp"
-            )
+            resp = StreamingResponse(content=img, media_type=f"image/webp")
             resp.headers["Cache-Control"] = "no-cache"
-            resp.headers['Last-Modified'] = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
+            resp.headers["Last-Modified"] = time.strftime(
+                "%a, %d %b %Y %H:%M:%S GMT", time.gmtime()
+            )
             return resp
 
         @self.router.get("/size")
         def get_size():
             size = self.canvas.get_size()
-            return {
-                "x": size[0],
-                "y": size[1]
-            }
+            return {"x": size[0], "y": size[1]}
 
         @self.router.get("/pixel")
         def get_pixel(x: int, y: int) -> str:
             pixel = self.canvas.get_pixel(x, y)
             if not pixel:
-                raise HTTPException(status_code=422, detail="Pixel out of bounds. Try /canvas/size")
+                raise HTTPException(
+                    status_code=422, detail="Pixel out of bounds. Try /canvas/size"
+                )
             return "%02x%02x%02x" % pixel
 
         @self.router.post("/pixel")
         def set_pixel(x: int, y: int, color: str):
             if not self.canvas.pixel_in_bounds(x, y):
-                raise HTTPException(status_code=422, detail="Pixel out of bounds. Try /canvas/size")
+                raise HTTPException(
+                    status_code=422, detail="Pixel out of bounds. Try /canvas/size"
+                )
 
             try:
                 c = int(color, 16)
@@ -85,9 +80,18 @@ class CanvasAPI:
                     b = (c & 0x0000FF00) >> 8
                     a = c & 0x000000FF
                 else:
-                    raise HTTPException(status_code=422, detail="Wrong color hex format.")
+                    raise HTTPException(
+                        status_code=422, detail="Wrong color hex format."
+                    )
             except ValueError:
                 raise HTTPException(status_code=422, detail="Wrong color hex format.")
-
             self.canvas.add_pixel(x, y, r, g, b, a)
 
+        @self.router.get("/test")
+        def test(since: int):
+            t1 = time.perf_counter()
+            out = self.canvas.ret_heart(since)
+            t2 = time.perf_counter() - t1
+            print(t2)
+            print(out)
+            return out

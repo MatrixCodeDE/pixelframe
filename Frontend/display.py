@@ -10,7 +10,7 @@ from pygame import Surface, SurfaceType
 from Canvas.canvas import Canvas
 from Config.config import Config
 from Misc.Template.pixelmodule import PixelModule
-from Misc.utils import logger, event_handler
+from Misc.utils import event_handler, logger
 
 
 class Display(PixelModule):

@@ -8,7 +8,7 @@ from gevent import spawn
 from Canvas.canvas import Canvas
 from Config.config import Config
 from Frontend.sockets import Client
-from Misc.utils import logger, event_handler
+from Misc.utils import event_handler, logger
 from Stats.stats import Stats
 
 
@@ -24,10 +24,6 @@ def register_events(canvas: Canvas, config: Config) -> None:
     """
 
     logger.info("Registering events")
-
-    @event_handler.register("update")
-    def update(canvas: Canvas, *args, **kwargs):
-        canvas.update()
 
     @event_handler.register("stop")
     def stop(canvas: Canvas):
@@ -129,10 +125,12 @@ def main():
 
     canvas = Canvas(config)
     main_loop = spawn(canvas.loop)
-    coroutines = [main_loop]
+    heart_loop = spawn(canvas.heart_loop)
+    coroutines = [main_loop, heart_loop]
 
     if config.frontend.display.enabled:
         from Frontend.display import Display
+
         display = Display(canvas)
         display_loop = spawn(display.loop)
         coroutines.append(display_loop)
@@ -143,12 +141,14 @@ def main():
 
     if config.frontend.sockets.enabled:
         from Frontend.sockets import Socketserver
+
         server = Socketserver(canvas, config)
         server_loop = spawn(server.loop)
         coroutines.append(server_loop)
 
     if config.frontend.api.enabled:
         from Frontend.API.pixelapi import start_api
+
         api = spawn(start_api, canvas, config)
         coroutines.append(api)
 
