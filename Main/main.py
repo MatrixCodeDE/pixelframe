@@ -52,10 +52,11 @@ def main():
         coroutines.append(server_loop)
 
     if config.frontend.api.enabled:
-        from Frontend.API.pixelapi import start_api
+        from Frontend.API.pixelapi import PixelAPI
 
-        api = spawn(start_api, canvas, config)
-        coroutines.append(api)
+        api = PixelAPI(canvas, config)
+        api_loop = spawn(api.loop)
+        coroutines.append(api_loop)
 
     stats = Stats(canvas, server)
 

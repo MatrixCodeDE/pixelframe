@@ -47,7 +47,7 @@ class Display(PixelModule):
             self.stop()
 
     def loop(self):
-        logger.info(f"Starting Process: {self.name}.loop")
+        logger.info(f"Starting Process: {self.prefix}.loop")
         updates = 1.0 / self.config.frontend.display.fps
 
         while self.running:

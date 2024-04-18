@@ -240,7 +240,7 @@ class Socketserver(PixelModule):
         """
         The loop for handling the client connections
         """
-        logger.info(f"Starting Process: {self.name}.loop")
+        logger.info(f"Starting Process: {self.prefix}.loop")
         while self.running:
             sock, addr = self.socket.accept()
             ip, port = addr
@@ -268,7 +268,7 @@ class Socketserver(PixelModule):
     def register_events(self):
         super().register_events()
 
-        @event_handler.register(f"{self.name}-PX")
+        @event_handler.register(f"{self.prefix}-PX")
         def add_pixel(canvas: Canvas, client: Client, x, y, color=None):
             x, y = int(x), int(y)
             if color:
@@ -291,7 +291,7 @@ class Socketserver(PixelModule):
                 r, g, b = canvas.get_pixel(x, y)
                 client.send("PX %d %d %02x%02x%02x" % (x, y, r, g, b))
 
-        @event_handler.register(f"{self.name}-HELP")
+        @event_handler.register(f"{self.prefix}-HELP")
         def on_help(canvas: Canvas, client: Client):
             help = "Commands:\n"
             help += ">>> HELP\n"
@@ -303,7 +303,7 @@ class Socketserver(PixelModule):
             help += f"Pixel per second per user: {client.pps}"
             client.send(help)
 
-        @event_handler.register(f"{self.name}-STATS")
+        @event_handler.register(f"{self.prefix}-STATS")
         def callback(canvas: Canvas, client: Client):
             d = canvas.get_pixel_color_count()
             import operator
@@ -314,16 +314,16 @@ class Socketserver(PixelModule):
                 dString += str(k) + ":\t" + str(v) + "\n"
             client.send("Current pixel color distribution:\n" + dString)
 
-        @event_handler.register(f"{self.name}-SIZE")
+        @event_handler.register(f"{self.prefix}-SIZE")
         def on_size(canvas: Canvas, client: Client):
             client.send("SIZE %d %d" % canvas.get_size())
 
-        @event_handler.register(f"{self.name}-EXIT")
+        @event_handler.register(f"{self.prefix}-EXIT")
         def on_quit(canvas: Canvas, client: Client):
             client.disconnect()
 
         if self.config.game.godmode.enabled:
-            @event_handler.register(f"{self.name}-GODMODE")
+            @event_handler.register(f"{self.prefix}-GODMODE")
             def on_quit(canvas: Canvas, client: Client, mode):
                 if mode == "on":
                     client.set_pps(self.config.game.godmode.pps)

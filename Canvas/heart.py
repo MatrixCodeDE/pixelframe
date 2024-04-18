@@ -1,4 +1,5 @@
 import time
+from typing import List, Tuple, Any
 
 import numpy as np
 from PIL import Image
@@ -72,7 +73,7 @@ class Heart:
         """
         self.timestamp = time_to_np(time.time())
 
-    def pixel_since(self, ts: int | float) -> dict:
+    def pixel_since(self, ts: int | float) -> list[tuple[int, int, str]]:
         """
         Returns all pixels that were modified since the given timestamp
         Args:
@@ -81,11 +82,13 @@ class Heart:
         Returns:
             A dictionary with the modified pixels
 
-        Output format: {
-            y: {
-                x: str (rgb as hex)
-            }
-        }
+        Output format: [
+            [
+                x (int),
+                y (int),
+                color (str)
+            ]
+        ]
         """
         if isinstance(ts, float):
             ts = int(ts)
@@ -96,21 +99,24 @@ class Heart:
         )
         colors = self.data[:, :, :3]
 
-        filtered = np.where((timestamps < ts) & (timestamps != 0))
-        coords = np.unravel_index(filtered[0], self.data.shape[:2])
+        filtered = np.where((timestamps > ts) & (timestamps != 0))
+        if len(filtered[0]) == 0:
+            return []
 
-        pixels = {}
-        for y, x in zip(*coords):
-            y = int(y)
-            x = int(x)
-            if y not in pixels:
-                pixels[y] = {}
+        coords = np.array(np.unravel_index(filtered[0], self.data.shape[:2])).T
 
-            r, g, b = colors[y, x, :3]
-            pixels[y][x] = rgb_to_hex(r, g, b)
+        pixels = np.empty((coords.shape[0], 3), dtype=object)
+        pixels[:, :2] = coords
 
-        return pixels
+        pixels[:, 2] = np.vectorize(rgb_to_hex)(*colors[coords[:, 0], coords[:, 1]].T)
 
-    def create_image(self):
+        return pixels.tolist()
+
+    def create_image(self) -> Image:
+        """
+        Creates an image from the canvas array
+        Returns:
+            The created image
+        """
         image = Image.fromarray(self.data[:, :, :3])
         return image

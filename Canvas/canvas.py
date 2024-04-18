@@ -1,6 +1,6 @@
 import time
 from collections import deque
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, List, Tuple
 
 from gevent import spawn
 from gevent.time import sleep as gsleep
@@ -129,8 +129,8 @@ class Canvas(PixelModule):
         Checks if the pixel is within the image
         """
         return (
-            0 <= x <= self.config.visuals.size.width
-            and 0 <= y <= self.config.visuals.size.height
+                0 <= x <= self.config.visuals.size.width
+                and 0 <= y <= self.config.visuals.size.height
         )
 
     def get_pixel(self, x: int, y: int) -> Any:
@@ -177,8 +177,8 @@ class Canvas(PixelModule):
         x, y = coords
         r, g, b, a = color
         if not (
-            0 <= x < self.config.visuals.size.width
-            and 0 <= y < self.config.visuals.size.height
+                0 <= x < self.config.visuals.size.width
+                and 0 <= y < self.config.visuals.size.height
         ):
             return
         elif pixel.a == 0:
@@ -224,19 +224,16 @@ class Canvas(PixelModule):
         """
         The loop for updating the heart's timestamp
         """
-        logger.info(f"Starting Process: {self.name}.heart_loop")
+        logger.info(f"Starting Process: {self.prefix}.heart_loop")
         while self.running:
             self._heart.update_timestamp()
             gsleep(1)
-
-    def ret_heart(self, since):
-        return self._heart.pixel_since(since)
 
     def loop(self) -> None:
         """
         The loop for controlling the canvas
         """
-        logger.info(f"Starting Process: {self.name}.loop")
+        logger.info(f"Starting Process: {self.prefix}.loop")
         updates = 1.0 / self.fps
         while self.running:
             start = time.time()
@@ -262,6 +259,16 @@ class Canvas(PixelModule):
         """
         return self._heart.create_image()
 
+    def get_pixel_since(self, timestamp: int) -> list[tuple[int, int, str]]:
+        """
+        Returns all pixels changed since timestamp
+        Args:
+            timestamp (int): Timestamp of the last client update
+        Returns:
+            dict with all changed pixels
+        """
+        return self._heart.pixel_since(timestamp)
+
     def is_alive(self) -> bool:
         """
         Gets if the canvas is still alive/rendering
@@ -271,8 +278,11 @@ class Canvas(PixelModule):
         return self.running
 
     def register_events(self):
+        """
+        Registers all events for the class
+        """
         super().register_events()
 
-        @event_handler.register(f"{self.name}-update")
+        @event_handler.register(f"{self.prefix}-update")
         def update(*args, **kwargs):
             self.update()

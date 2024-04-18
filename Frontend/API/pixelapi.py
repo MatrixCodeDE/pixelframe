@@ -7,40 +7,53 @@ from fastapi import FastAPI
 from Canvas.canvas import Canvas
 from Config.config import Config
 from Frontend.API.canvas import CanvasAPI
-from Frontend.API.website import WebsiteAPI
+from Frontend.API.website import WebserviceAPI
 from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import logger
 
 
-class PixelAPI(FastAPI, PixelModule):
+class PixelAPI(PixelModule):
+    """
+    The API to control the canvas
+    Attributes:
+        base_api (FastAPI): The base API
+        web_api (WebserviceAPI): The API router for the web service
+        canvas_api (CanvasAPI): The API router for the canvas functions
+        canvas (Canvas): The canvas itself
+        config (Config): The config for everything
+    """
 
+    base_api: FastAPI
+    web_api: WebserviceAPI
+    canvas_api: CanvasAPI
     canvas: Canvas
     config: Config
 
     def __init__(self, canvas: Canvas, config: Config):
-        super().__init__(
-            title=f"{config.general.name} API",
+        self.config = config
+        self.base_api = FastAPI(
+            title=f"{self.config.general.name} API",
             description="API endpoint for putting pixels on the canvas",
             version="b0.1",
         )
         self.canvas = canvas
-        self.config = config
+        super().__init__("PixelAPI")
 
+        self.web_api = WebserviceAPI()
+        self.base_api.include_router(self.web_api.router)
 
-def start_api(canvas: Canvas, config: Config):
-    api = PixelAPI(canvas, config)
+        self.canvas_api = CanvasAPI(self.canvas, self.config)
+        self.base_api.include_router(self.canvas_api.router)
 
-    webapi = WebsiteAPI()
-    api.include_router(webapi.router)
+    def loop(self):
+        """
+        The loop for the API
+        """
+        logger.info(f"Starting Process: {self.prefix}.fastAPI")
 
-    canvasapi = CanvasAPI(canvas, config)
-    api.include_router(canvasapi.router)
-
-    logger.info(f"Starting Process: PixelAPI.fastAPI")
-
-    uvicorn.run(
-        api,
-        host=config.connection.host,
-        port=config.connection.ports.api,
-        log_level=logging.WARN,
-    )
+        uvicorn.run(
+            self.base_api,
+            host=self.config.connection.host,
+            port=self.config.connection.ports.api,
+            log_level=logging.WARN,
+        )
