@@ -58,7 +58,7 @@ def main():
         api_loop = spawn(api.loop)
         coroutines.append(api_loop)
 
-    stats = Stats(canvas, server)
+    # stats = Stats(canvas, server)
 
     logger.info("Starting Processes")
 

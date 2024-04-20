@@ -3,24 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <title>Template</title>
+    <style>
+        #canvasContainer {
+            max-width: 90%;
+            max-height: 95%;
+            margin: 0 auto;
+        }
+
+        #canvas {
+            width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
     Template
-    <img id="canvas" src="" alt="Canvas" width="90%">
+    <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+    </div>
+
     <button onclick="to_docs()">Docs</button>
 
     <script>
-        function refreshImage() {
-            let img = document.getElementById('canvas');
-            let date = new Date().getTime();
-            img.src = "http://0.0.0.0:8000/canvas/?" + date;
+
+        const host = "http://0.0.0.0:8000";
+        const canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext("2d");
+        let lastUpdate = new Date().getTime();
+
+        function init() {
+
         }
 
         function to_docs(){
             window.location.href = "/docs";
         }
 
-        setInterval(refreshImage, 1000);
+        function changeCanvasSize(x, y){
+            canvas.width = x;
+            canvas.height = y;
+        }
+
+        function updateTime(){
+            lastUpdate = Math.floor(Date.now() / 1000) - 1;
+        }
+
+        function getCanvasSize() {
+            return new Promise(function(resolve, reject) {
+                let sizeURL = host + "/canvas/size";
+                let xhrSize = new XMLHttpRequest();
+
+                xhrSize.open("GET", sizeURL, true);
+                xhrSize.onload = function () {
+                    if (xhrSize.status === 200) {
+                        let sizeData = JSON.parse(xhrSize.response);
+                        let sizeX = sizeData.x;
+                        let sizeY = sizeData.y;
+                        resolve([sizeX, sizeY]);
+                    } else {
+                        console.log("Endpoint " + sizeURL + " statuscode ", xhrSize.status);
+                        reject("Fehler beim Laden der Canvas-Größe.");
+                    }
+                }
+
+                xhrSize.onerror = function() {
+                    console.error("Could not reach endpoint" + sizeURL);
+                    reject("Netzwerkfehler beim Laden der Canvas-Größe.");
+                };
+
+                xhrSize.send();
+            });
+        }
+
+        function resizeCanvas() {
+            getCanvasSize().then(function (size){
+                changeCanvasSize(size[0], size[1]);
+            }).catch(function (error){
+                console.error("Error while getting canvas size!");
+            });
+        }
+
+        function loadImage(){
+
+            let imgURL = host + "/canvas/";
+            let xhrImg = new XMLHttpRequest();
+
+            xhrImg.open("GET", imgURL, true);
+            xhrImg.responseType = "blob";
+
+            xhrImg.onload = function(event) {
+                if (xhrImg.status === 200) {
+                    let blob = xhrImg.response;
+                    let img = new Image();
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = URL.createObjectURL(blob);
+                } else {
+                    console.error("Error on loading " + imgURL + ": ", xhrImg.statusText);
+                    ctx.fillStyle = "black";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+            };
+
+            xhrImg.onerror = function(event) {
+                console.error("Error on loading " + imgURL + ": ", xhrImg.statusText);
+                    ctx.fillStyle = "black";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            xhrImg.send();
+            updateTime();
+        }
+
+        function getNewPixels2() {
+            return new Promise(function(resolve, reject) {
+                let pixelsURL = host + "/canvas/since?timestamp=" + lastUpdate;
+                let xhrSince = new XMLHttpRequest();
+
+                xhrSince.open("GET", pixelsURL, true);
+
+                xhrSince.onload = function () {
+                    if (xhrSince.status === 200) {
+                        let pixelData = JSON.parse(xhrSince.response);
+                        updateTime();
+                        resolve(pixelData);
+                    } else {
+                        console.log("Endpoint " + pixelsURL + " statuscode ", xhrSince.status);
+                        reject("Fehler beim Laden der Pixel-Daten.");
+                    }
+                }
+
+                xhrSince.onerror = function() {
+                    console.error("Could not reach endpoint" + pixelsURL);
+                    reject("Netzwerkfehler beim Laden der Pixel-Daten.");
+                };
+
+                xhrSince.send();
+            });
+        }
+
+        function getNewPixels(callback) {
+            let url = host + "/canvas/since?timestamp=" + lastUpdate;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Hier könnten weitere Verarbeitungen der Daten durchgeführt werden, wenn nötig
+                    callback(data);
+                })
+                .catch(error => {
+                    console.error("Fehler beim Abrufen der Pixel:", error);
+                    callback([]);
+                });
+        }
+
+        function hexToRgb(hex) {
+            if (hex.length === 6) {
+                hex = '#' + hex;
+            }
+            let bigint = parseInt(hex.slice(1), 16);
+            let r = (bigint >> 16) & 255;
+            let g = (bigint >> 8) & 255;
+            let b = bigint & 255;
+            return [r, g, b];
+        }
+
+        function changePixel(x, y, color){
+            let imgData = ctx.getImageData(x, y, 1, 1);
+            let data = imgData.data;
+
+            let [r, g, b] = hexToRgb(color);
+            data[0] = r;
+            data[1] = g;
+            data[2] = b;
+            ctx.putImageData(imgData, x, y);
+        }
+
+        function updateNewPixels() {
+
+            getNewPixels(function (data){
+                if (data.length !== 0){
+                    console.log(data);
+                    data.forEach(function(pixel){
+                        changePixel(pixel[0], pixel[1], pixel[2]);
+                    })
+                }
+            });
+
+            updateTime();
+        }
+
+        resizeCanvas();
+        loadImage();
+        setInterval(updateNewPixels, 2000);
+
     </script>
 </body>
 </html>

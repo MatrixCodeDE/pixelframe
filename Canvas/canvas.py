@@ -191,7 +191,7 @@ class Canvas(PixelModule):
             g = (g2 * (0xFF - a) + (g * a)) / 0xFF
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
             self._heart.update_pixel(x, y, (r, g, b))
-        self.stats.add_pixel(x, y)
+        # self.stats.add_pixel(x, y)
 
     def get_pixel_color_count(self) -> dict[str, int]:
         """

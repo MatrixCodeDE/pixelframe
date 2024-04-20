@@ -11,7 +11,7 @@
       "enabled": true
     },
     "sockets": {
-      "enabled": true
+      "enabled": false
     }
   },
   "connection": {

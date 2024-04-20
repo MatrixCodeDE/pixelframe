@@ -3,7 +3,7 @@ from io import BytesIO
 
 from fastapi import APIRouter, HTTPException
 from PIL.Image import Image
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, HTMLResponse
 
 from Canvas.canvas import Canvas
 from Config.config import Config

@@ -110,6 +110,8 @@ class Heart:
 
         pixels[:, 2] = np.vectorize(rgb_to_hex)(*colors[coords[:, 0], coords[:, 1]].T)
 
+        pixels[:, [0, 1, 2]] = pixels[:, [1, 0, 2]]  # transform from [y, x, color] to [x, y, color]
+
         return pixels.tolist()
 
     def create_image(self) -> Image:
