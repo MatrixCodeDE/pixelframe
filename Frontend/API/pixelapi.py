@@ -35,14 +35,15 @@ class PixelAPI(PixelModule):
             title=f"{self.config.general.name} API",
             description="API endpoint for putting pixels on the canvas",
             version="b0.1",
+            docs_url=None,
         )
         self.canvas = canvas
         super().__init__("PixelAPI")
 
-        self.web_api = WebserviceAPI()
+        self.web_api = WebserviceAPI(self.base_api)
         self.base_api.include_router(self.web_api.router)
 
-        self.canvas_api = CanvasAPI(self.canvas, self.config)
+        self.canvas_api = CanvasAPI(self.base_api, self.canvas, self.config)
         self.base_api.include_router(self.canvas_api.router)
 
     def loop(self):

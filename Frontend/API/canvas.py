@@ -1,7 +1,7 @@
 import time
 from io import BytesIO
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, FastAPI
 from PIL.Image import Image
 from starlette.responses import StreamingResponse, HTMLResponse
 
@@ -17,11 +17,13 @@ class CanvasAPI:
         canvas (Canvas): The canvas
         config (Config): The config
     """
+    api: FastAPI
     router: APIRouter
     canvas: Canvas
     config: Config
 
-    def __init__(self, canvas: Canvas, config: Config):
+    def __init__(self, api: FastAPI, canvas: Canvas, config: Config):
+        self.api = api
         self.router = APIRouter(prefix="/canvas", tags=["canvas"])
         self.canvas = canvas
         self.config = config
