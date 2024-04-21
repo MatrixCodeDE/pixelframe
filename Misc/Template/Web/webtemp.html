@@ -184,7 +184,6 @@
 
             getNewPixels(function (data){
                 if (data.length !== 0){
-                    console.log(data);
                     data.forEach(function(pixel){
                         changePixel(pixel[0], pixel[1], pixel[2]);
                     })
@@ -196,7 +195,7 @@
 
         resizeCanvas();
         loadImage();
-        setInterval(updateNewPixels, 2000);
+        setInterval(updateNewPixels, 1000);
 
     </script>
 </body>

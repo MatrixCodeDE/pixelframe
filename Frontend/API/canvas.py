@@ -2,7 +2,7 @@ import time
 from io import BytesIO
 
 from fastapi import APIRouter, HTTPException, FastAPI
-from PIL.Image import Image
+from PIL import Image
 from starlette.responses import StreamingResponse, HTMLResponse
 
 from Canvas.canvas import Canvas

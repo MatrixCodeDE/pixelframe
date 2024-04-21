@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -8,6 +9,51 @@ logger = logging.getLogger("pixelframe")
 logging.basicConfig(level=logging.INFO)
 
 event_handler = EventHandler()
+
+
+class Status:
+    config: None
+    api: bool
+    display: bool
+    socketserver: bool
+
+    def __init__(self):
+        self.config = None
+        self.api = False
+        self.display = False
+        self.socketserver = False
+
+    def update(self, attribute: str, value: Any) -> bool:
+        """
+        Updates the status of the services of pixelframe
+        """
+        if hasattr(self, attribute):
+            if type(getattr(self, attribute)) == type(value):
+                setattr(self, attribute, value)
+                return True
+            elif attribute == "config":
+                setattr(self, attribute, value)
+        return False
+
+    def get_status(self) -> dict:
+        return {
+            "api": {
+                "state": "online" if self.api else "offline",
+                "port": self.config.connection.ports.api if self.config.frontend.api.enabled else "-"
+            },
+            "display": {
+                "state": "online" if self.display else "offline",
+                "port": "Not supported"
+            },
+            "socketserver": {
+                "state": "online" if self.socketserver else "offline",
+                "port": self.config.connection.ports.socket if self.config.frontend.sockets.enabled else "-"
+            },
+        }
+
+
+
+status = Status()
 
 
 class NoFrontendException(Exception):

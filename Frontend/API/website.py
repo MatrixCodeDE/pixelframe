@@ -2,6 +2,9 @@ from fastapi import APIRouter, FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from starlette.responses import HTMLResponse
 
+from Config.config import Config
+from Misc.utils import status
+
 
 def custom_swagger_ui_html(title: str):
     html_content = get_swagger_ui_html(
@@ -9,7 +12,6 @@ def custom_swagger_ui_html(title: str):
         title=title,
     )
     html_content_body = html_content.body.decode("utf-8")
-    print(html_content_body)
 
     html_content_body = html_content_body.replace("</body>", """
             <script type="text/javascript">
@@ -35,11 +37,13 @@ def custom_swagger_ui_html(title: str):
 
 class WebserviceAPI:
     api: FastAPI
+    config: Config
     router: APIRouter
     template: str
 
-    def __init__(self, api: FastAPI):
+    def __init__(self, api: FastAPI, config: Config):
         self.api = api
+        self.config = config
         self.router = APIRouter()
         with open("Misc/Template/Web/webtemp.html", "r") as temp:
             self.template = temp.read()
@@ -55,5 +59,9 @@ class WebserviceAPI:
             return self.template
 
         @self.router.get("/docs", include_in_schema=False)
-        async def custom_swagger_ui():
+        def custom_swagger_ui():
             return custom_swagger_ui_html(self.api.title)
+
+        @self.router.get("/status")
+        def get_status():
+            return status.get_status()

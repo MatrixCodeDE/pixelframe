@@ -8,7 +8,7 @@ from gevent import spawn
 from Canvas.canvas import Canvas
 from Config.config import Config
 from Frontend.sockets import Client
-from Misc.utils import event_handler, logger
+from Misc.utils import event_handler, logger, status
 from Stats.stats import Stats
 
 
@@ -31,6 +31,7 @@ def main():
     args = parser.parse_args()
 
     config = Config(args.configfile)
+    status.update("config", config)
 
     canvas = Canvas(config)
     main_loop = spawn(canvas.loop)
@@ -40,6 +41,7 @@ def main():
     if config.frontend.display.enabled:
         from Frontend.display import Display
 
+        status.update("display", True)
         display = Display(canvas)
         display_loop = spawn(display.loop)
         coroutines.append(display_loop)
@@ -47,6 +49,7 @@ def main():
     if config.frontend.sockets.enabled:
         from Frontend.sockets import Socketserver
 
+        status.update("socketserver", True)
         server = Socketserver(canvas, config)
         server_loop = spawn(server.loop)
         coroutines.append(server_loop)
@@ -54,6 +57,7 @@ def main():
     if config.frontend.api.enabled:
         from Frontend.API.pixelapi import PixelAPI
 
+        status.update("api", True)
         api = PixelAPI(canvas, config)
         api_loop = spawn(api.loop)
         coroutines.append(api_loop)

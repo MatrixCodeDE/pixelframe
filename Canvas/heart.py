@@ -73,7 +73,7 @@ class Heart:
         """
         self.timestamp = time_to_np(time.time())
 
-    def pixel_since(self, ts: int | float) -> list[tuple[int, int, str]]:
+    def pixel_since(self, ts: int | float) -> list[tuple[int, int, str]] | str:
         """
         Returns all pixels that were modified since the given timestamp
         Args:
@@ -112,7 +112,10 @@ class Heart:
 
         pixels[:, [0, 1, 2]] = pixels[:, [1, 0, 2]]  # transform from [y, x, color] to [x, y, color]
 
-        return pixels.tolist()
+        out = pixels.tolist()
+        # if len(out) > 200:  # 1 Pixel = 5ms time * 200px = 1s reload time in browser
+        #     return "refresh"
+        return out
 
     def create_image(self) -> Image:
         """

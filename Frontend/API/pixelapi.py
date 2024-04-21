@@ -40,7 +40,7 @@ class PixelAPI(PixelModule):
         self.canvas = canvas
         super().__init__("PixelAPI")
 
-        self.web_api = WebserviceAPI(self.base_api)
+        self.web_api = WebserviceAPI(self.base_api, self.config)
         self.base_api.include_router(self.web_api.router)
 
         self.canvas_api = CanvasAPI(self.base_api, self.canvas, self.config)
