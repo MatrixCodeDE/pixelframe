@@ -1,6 +1,6 @@
 import time
 from collections import deque
-from typing import Any, Callable, Optional, List, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 from gevent import spawn
 from gevent.time import sleep as gsleep
@@ -129,8 +129,8 @@ class Canvas(PixelModule):
         Checks if the pixel is within the image
         """
         return (
-                0 <= x <= self.config.visuals.size.width
-                and 0 <= y <= self.config.visuals.size.height
+            0 <= x <= self.config.visuals.size.width
+            and 0 <= y <= self.config.visuals.size.height
         )
 
     def get_pixel(self, x: int, y: int) -> Any:
@@ -177,8 +177,8 @@ class Canvas(PixelModule):
         x, y = coords
         r, g, b, a = color
         if not (
-                0 <= x < self.config.visuals.size.width
-                and 0 <= y < self.config.visuals.size.height
+            0 <= x < self.config.visuals.size.width
+            and 0 <= y < self.config.visuals.size.height
         ):
             return
         elif pixel.a == 0:

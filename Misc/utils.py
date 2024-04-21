@@ -39,18 +39,25 @@ class Status:
         return {
             "api": {
                 "state": "online" if self.api else "offline",
-                "port": self.config.connection.ports.api if self.config.frontend.api.enabled else "-"
+                "port": (
+                    self.config.connection.ports.api
+                    if self.config.frontend.api.enabled
+                    else "-"
+                ),
             },
             "display": {
                 "state": "online" if self.display else "offline",
-                "port": "Not supported"
+                "port": "Not supported",
             },
             "socketserver": {
                 "state": "online" if self.socketserver else "offline",
-                "port": self.config.connection.ports.socket if self.config.frontend.sockets.enabled else "-"
+                "port": (
+                    self.config.connection.ports.socket
+                    if self.config.frontend.sockets.enabled
+                    else "-"
+                ),
             },
         }
-
 
 
 status = Status()
@@ -81,7 +88,12 @@ def np_to_time(ts: np.ndarray) -> int:
     return int.from_bytes(ts_bytes, byteorder="big")
 
 
-def rgb_to_hex(r: int | np.uint8, g: int | np.uint8, b: int | np.uint8, a: int | np.uint8 | None = None) -> str:
+def rgb_to_hex(
+    r: int | np.uint8,
+    g: int | np.uint8,
+    b: int | np.uint8,
+    a: int | np.uint8 | None = None,
+) -> str:
     if a:
         return "%02x%02x%02x%02x" % (r, g, b, a)
     else:

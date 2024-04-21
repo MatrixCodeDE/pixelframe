@@ -62,13 +62,13 @@
                         resolve([sizeX, sizeY]);
                     } else {
                         console.log("Endpoint " + sizeURL + " statuscode ", xhrSize.status);
-                        reject("Fehler beim Laden der Canvas-Größe.");
+                        reject("Error with status " + xhrSize.status);
                     }
                 }
 
                 xhrSize.onerror = function() {
-                    console.error("Could not reach endpoint" + sizeURL);
-                    reject("Netzwerkfehler beim Laden der Canvas-Größe.");
+                    //console.error("Could not reach endpoint" + sizeURL);
+                    reject("Couldn't reach endpoint");
                 };
 
                 xhrSize.send();
@@ -116,44 +116,22 @@
             updateTime();
         }
 
-        function getNewPixels2() {
-            return new Promise(function(resolve, reject) {
-                let pixelsURL = host + "/canvas/since?timestamp=" + lastUpdate;
-                let xhrSince = new XMLHttpRequest();
-
-                xhrSince.open("GET", pixelsURL, true);
-
-                xhrSince.onload = function () {
-                    if (xhrSince.status === 200) {
-                        let pixelData = JSON.parse(xhrSince.response);
-                        updateTime();
-                        resolve(pixelData);
-                    } else {
-                        console.log("Endpoint " + pixelsURL + " statuscode ", xhrSince.status);
-                        reject("Fehler beim Laden der Pixel-Daten.");
-                    }
-                }
-
-                xhrSince.onerror = function() {
-                    console.error("Could not reach endpoint" + pixelsURL);
-                    reject("Netzwerkfehler beim Laden der Pixel-Daten.");
-                };
-
-                xhrSince.send();
-            });
-        }
-
         function getNewPixels(callback) {
             let url = host + "/canvas/since?timestamp=" + lastUpdate;
 
             fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    if (response.redirected && response.url === host + "/canvas/"){
+                        loadImage();
+                        callback([]);
+                    } else {
+                        response.json();
+                    }
+                })
                 .then(data => {
-                    // Hier könnten weitere Verarbeitungen der Daten durchgeführt werden, wenn nötig
                     callback(data);
                 })
                 .catch(error => {
-                    console.error("Fehler beim Abrufen der Pixel:", error);
                     callback([]);
                 });
         }

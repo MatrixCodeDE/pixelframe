@@ -42,7 +42,12 @@ class Client:
     timeout: bool
 
     def __init__(
-        self, canvas: Optional["Canvas"], ip: str, port: int, pps: int | float = 30, super_prefix: str = "SOCKSERV"
+        self,
+        canvas: Optional["Canvas"],
+        ip: str,
+        port: int,
+        pps: int | float = 30,
+        super_prefix: str = "SOCKSERV",
     ) -> None:
         """
         Initializes the client object
@@ -144,7 +149,9 @@ class Client:
                     cd = self.cooldown_until - now
                     if cd < 0:
                         if not event_handler.trigger(
-                            f"{self.super_prefix}-%s" % command.upper(), self, *arguments
+                            f"{self.super_prefix}-%s" % command.upper(),
+                            self,
+                            *arguments,
                         ):
                             self.send("Wrong arguments")
                         self.cooldown_until = now + self.cooldown
@@ -323,6 +330,7 @@ class Socketserver(PixelModule):
             client.disconnect()
 
         if self.config.game.godmode.enabled:
+
             @event_handler.register(f"{self.prefix}-GODMODE")
             def on_quit(canvas: Canvas, client: Client, mode):
                 if mode == "on":
@@ -331,4 +339,3 @@ class Socketserver(PixelModule):
                 else:
                     client.set_pps(self.config.game.pps)
                     client.send("You are no longer god (%d pps)" % client.pps)
-

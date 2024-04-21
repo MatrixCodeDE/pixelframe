@@ -13,7 +13,9 @@ def custom_swagger_ui_html(title: str):
     )
     html_content_body = html_content.body.decode("utf-8")
 
-    html_content_body = html_content_body.replace("</body>", """
+    html_content_body = html_content_body.replace(
+        "</body>",
+        """
             <script type="text/javascript">
                 var button = document.createElement("button");
                 button.innerText = "Canvas";
@@ -31,7 +33,9 @@ def custom_swagger_ui_html(title: str):
                 };
                 document.body.appendChild(button);
             </script>
-        </body>""", 1)
+        </body>""",
+        1,
+    )
     return HTMLResponse(content=html_content_body, status_code=html_content.status_code)
 
 

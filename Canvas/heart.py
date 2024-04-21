@@ -1,5 +1,4 @@
 import time
-from typing import List, Tuple, Any
 
 import numpy as np
 from PIL import Image
@@ -73,7 +72,7 @@ class Heart:
         """
         self.timestamp = time_to_np(time.time())
 
-    def pixel_since(self, ts: int | float) -> list[tuple[int, int, str]] | str:
+    def pixel_since(self, ts: int | float) -> list[tuple[int, int, str]] | None:
         """
         Returns all pixels that were modified since the given timestamp
         Args:
@@ -110,11 +109,13 @@ class Heart:
 
         pixels[:, 2] = np.vectorize(rgb_to_hex)(*colors[coords[:, 0], coords[:, 1]].T)
 
-        pixels[:, [0, 1, 2]] = pixels[:, [1, 0, 2]]  # transform from [y, x, color] to [x, y, color]
+        pixels[:, [0, 1, 2]] = pixels[
+            :, [1, 0, 2]
+        ]  # transform from [y, x, color] to [x, y, color]
 
         out = pixels.tolist()
-        # if len(out) > 200:  # 1 Pixel = 5ms time * 200px = 1s reload time in browser
-        #     return "refresh"
+        if len(out) > 200:  # 1 Pixel = 5ms time * 200px = 1s reload time in browser
+            return None
         return out
 
     def create_image(self) -> Image:

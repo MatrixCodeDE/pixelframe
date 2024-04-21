@@ -8,6 +8,7 @@ class PixelModule:
         prefix (str): The prefix used for the events to identify the module
         running (bool): If the module is currently running
     """
+
     prefix: str
     running: bool
 
@@ -20,6 +21,7 @@ class PixelModule:
         """
         Registers all events for the class
         """
+
         @event_handler.register(self.prefix + "-exit")
         def module_stop(*args, **kwargs):
             self.stop()

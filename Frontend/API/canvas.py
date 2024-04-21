@@ -1,9 +1,9 @@
 import time
 from io import BytesIO
 
-from fastapi import APIRouter, HTTPException, FastAPI
+from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.responses import RedirectResponse, StreamingResponse
 from PIL import Image
-from starlette.responses import StreamingResponse, HTMLResponse
 
 from Canvas.canvas import Canvas
 from Config.config import Config
@@ -17,6 +17,7 @@ class CanvasAPI:
         canvas (Canvas): The canvas
         config (Config): The config
     """
+
     api: FastAPI
     router: APIRouter
     canvas: Canvas
@@ -50,6 +51,7 @@ class CanvasAPI:
         """
         Registers all endpoints for the router
         """
+
         @self.router.get(
             "/",
             responses={
@@ -130,4 +132,6 @@ class CanvasAPI:
             Returns all pixels changed since the given UNIX timestamp
             """
             out = self.canvas.get_pixel_since(timestamp)
+            if out is None:
+                return RedirectResponse(url="/canvas/")
             return out

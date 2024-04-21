@@ -12,11 +12,11 @@ Since this is a rewrite of the entire original project, I also added some featur
 
 ### Display
 
-PyGame isn't exactly a new feature, but its optional now (Web Service coming soon). The new base of this project is Pillow. Also, you can display a stats bar for connection details and basic stats of the canvas when using in public.
+PyGame isn't exactly a new feature, but its optional now. It has a complete new base, so you can run it in for example a docker container. Also, you can display a stats bar for connection details and basic stats of the canvas when using in public.
 
-### Webinterface (Coming Soon)
+### Webinterface
 
-Can display the current canvas
+Can display the current canvas, also featuring the integrated Documentation on /docs and /redoc
 
 ### API
 
@@ -88,3 +88,7 @@ python3 -m isort .
 * [Pixelflut](https://github.com/defnull/pixelflut) - A lot of inspiration and code snippets
 * [Leon](https://git.leon.wtf/leon/pixelflut) - The `STATS` command
 * [LyonsType](./Misc/OFL.txt) - The font `LT Superior Mono`
+
+## Disclaimer
+
+> Most of the HTML and JS code if very sketchy and copied together from diverse websites, so there might be some bugs here and there. Contribute if you want to improve it, I'd appreciate it very much!

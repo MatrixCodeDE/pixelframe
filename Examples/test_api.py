@@ -1,5 +1,6 @@
-import requests
 import time
+
+import requests
 
 for y in range(10):
     for x in range(20):
