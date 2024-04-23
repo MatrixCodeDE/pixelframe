@@ -1,6 +1,7 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from starlette.responses import HTMLResponse
+from starlette.staticfiles import StaticFiles
 
 from Config.config import Config
 from Misc.utils import status
@@ -49,8 +50,9 @@ class WebserviceAPI:
         self.api = api
         self.config = config
         self.router = APIRouter()
-        with open("Misc/Template/Web/webtemp.html", "r") as temp:
+        with open("Misc/Template/Web/canvas.html", "r") as temp:
             self.template = temp.read()
+        self.api.mount("/static", StaticFiles(directory="Misc/Template/Web"), name="static")
         self.register_routes()
 
     def register_routes(self):

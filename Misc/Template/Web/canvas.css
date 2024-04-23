@@ -1,0 +1,10 @@
+#canvasContainer {
+    max-width: 90%;
+    max-height: 95%;
+    margin: 0 auto;
+}
+
+#canvas {
+    width: 100%;
+    height: auto;
+}
