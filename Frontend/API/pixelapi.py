@@ -3,6 +3,7 @@ from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from Canvas.canvas import Canvas
 from Config.config import Config
@@ -39,12 +40,18 @@ class PixelAPI(PixelModule):
         )
         self.canvas = canvas
         super().__init__("PixelAPI")
+        self.base_redirect()
 
         self.web_api = WebserviceAPI(self.base_api, self.config)
         self.base_api.include_router(self.web_api.router)
 
         self.canvas_api = CanvasAPI(self.base_api, self.canvas, self.config)
         self.base_api.include_router(self.canvas_api.router)
+
+    def base_redirect(self):
+        @self.base_api.exception_handler(404)
+        def custom_not_found(*args, **kwargs):
+            return RedirectResponse("/docs")
 
     def loop(self):
         """

@@ -2,18 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Template</title>
+    <title>PixelFrame</title>
     <link rel="stylesheet" href="static/canvas.css">
+    <link rel="stylesheet" href="static/navbar.css">
 </head>
 <body>
-    <nav class="navbar" fixed-top>
-        todo
-    </nav>
+    <div class="navigation">
+        <a class="title">Hello</a>
+        <ul class="navbar">
+            <li class="nav-box nav-first">
+                <a class="nav-item active" href="/">Canvas</a>
+            </li>
+            <li class="nav-box">
+                <a class="nav-item" href="/docs">API</a>
+            </li>
+            <li class="nav-box">
+                <a class="nav-item">Guide</a>
+            </li>
+            <li class="nav-box nav-last">
+                <a class="nav-item" href="https://github.com/MatrixCodeDE/pixelframe">GitHub</a>
+            </li>
+        </ul>
+    </div>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
     </div>
-
-    <button onclick="to_docs()">Docs</button>
 
     <script src="static/canvas.js"></script>
 </body>

@@ -14,10 +14,6 @@ function init(event) {
     setInterval(updateNewPixels, 1000);
 }
 
-function to_docs(){
-    window.location.href = "/docs";
-}
-
 function changeCanvasSize(x, y){
     canvas.width = x;
     canvas.height = y;
