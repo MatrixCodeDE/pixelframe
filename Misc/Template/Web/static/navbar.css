@@ -1,18 +1,33 @@
 .navigation {
     position: fixed;
+    top: 0;
     margin-top: 0;
     display: flex;
     right: 0;
     left: 0;
     width: 100%;
     background-color: #333;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    font-family: Verdana, sans-serif;
 }
 
 .title {
+    display: flex;
+    align-items: center;
+    margin: 0 30px;
+}
+
+.title-logo {
+    height: 40px;
+    width: auto;
+    margin-right: 5px;
+}
+
+.title-text {
     color: white;
     text-align: center;
-    padding: 14px 30px;
-    margin-right: 1rem;
 }
 
 .navbar {
@@ -25,19 +40,17 @@
 
 .nav-box {
     float: left;
-    border-right:1px solid #bbb;
-}
-
-.nav-last {
-    float: right;
+    border-right: 1px solid #bbb;
+    height: 100%;
 }
 
 .nav-first {
-    border-right:1px solid #bbb;
+    border-left: 1px solid #bbb;
 }
 
 .nav-last {
-    border-left:1px solid #bbb;
+    border-left: 1px solid #bbb;
+    float: right;
 }
 
 .nav-item {
@@ -48,6 +61,15 @@
     text-decoration: none;
 }
 
+.nav-active {
+  background-color: #0883b9;
+}
+
 .nav-box:hover:not(.active) {
     background-color: #777;
+}
+
+.spacer {
+    margin-top: 60px;
+    position: relative;
 }

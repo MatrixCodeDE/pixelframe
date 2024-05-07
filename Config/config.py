@@ -2,6 +2,8 @@ import json
 import time
 from typing import Any
 
+from aiohttp import web
+
 from Misc.utils import NoFrontendException, confirm, logger
 
 
@@ -39,15 +41,24 @@ class Sockets:
         self.enabled = enabled
 
 
+class Web:
+    force_reload: bool
+
+    def __init__(self, force_reload: bool):
+        self.force_reload = force_reload
+
+
 class Frontend:
     display: Display
     api: Api
     sockets: Sockets
+    web: Web
 
-    def __init__(self, display: dict, api: dict, sockets: dict):
+    def __init__(self, display: dict, api: dict, sockets: dict, web: dict):
         self.display = Display(**display)
         self.api = Api(**api)
         self.sockets = Sockets(**sockets)
+        self.web = Web(**web)
         if not self.display.enabled and not self.api.enabled:
             raise NoFrontendException()
 

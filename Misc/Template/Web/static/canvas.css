@@ -1,0 +1,20 @@
+#canvasContainer {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 80px);
+    margin: 0 auto;
+    text-align: center;
+}
+
+#canvas {
+    /*width: calc(100% - 40px);
+    height: calc(100% - 60px);
+    align-self: center;
+    max-width: calc(100% - 60px);
+    max-height: calc(100% - 60px);*/
+    width: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: Verdana, sans-serif;
+}

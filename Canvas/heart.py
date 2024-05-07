@@ -50,6 +50,7 @@ class Heart:
         """
         self.data[y, x, :3] = np.array(value, dtype=np.uint8)
         self.data[y, x, 3:] = self.timestamp
+        print("updated")
 
     def get_pixel_color(self, x: int, y: int) -> tuple:
         """
@@ -98,7 +99,7 @@ class Heart:
         )
         colors = self.data[:, :, :3]
 
-        filtered = np.where((timestamps > ts) & (timestamps != 0))
+        filtered = np.where((timestamps >= ts) & (timestamps != 0))
         if len(filtered[0]) == 0:
             return []
 
@@ -114,7 +115,8 @@ class Heart:
         ]  # transform from [y, x, color] to [x, y, color]
 
         out = pixels.tolist()
-        if len(out) > 200:  # 1 Pixel = 5ms time * 200px = 1s reload time in browser
+        # 1 Pixel = 5ms time * 200px = 1s reload time in browser
+        if len(out) > 200 or self.config.frontend.web.force_reload:
             return None
         return out
 

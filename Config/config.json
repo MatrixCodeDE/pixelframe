@@ -12,6 +12,9 @@
     },
     "sockets": {
       "enabled": false
+    },
+    "web": {
+      "force_reload": false
     }
   },
   "connection": {

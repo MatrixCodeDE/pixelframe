@@ -3,6 +3,7 @@ let host;
 let canvas;
 let ctx;
 let lastUpdate;
+let interval;
 
 function init(event) {
     host = "http://" + window.location.hostname + ":" + window.location.port;
@@ -11,7 +12,12 @@ function init(event) {
     lastUpdate = new Date().getTime();
     resizeCanvas();
     loadImage();
-    setInterval(updateNewPixels, 1000);
+    interval = setInterval(updateNewPixels, 1000);
+}
+
+function updateInterval(func, timeout){
+    clearInterval(interval);
+    interval = setInterval(func, timeout);
 }
 
 function changeCanvasSize(x, y){
@@ -93,22 +99,36 @@ function loadImage(){
 
 function getNewPixels(callback) {
     let url = host + "/canvas/since?timestamp=" + lastUpdate;
+    let xhr = new XMLHttpRequest();
 
-    fetch(url)
+    xhr.open("GET", url, true);
+    xhr.onload = function (event){
+        let pix = xhr.response;
+        console.log(pix);
+    };
+
+    xhr.onerror = function (event) {
+        if (xhr.status === 0){
+            updateInterval(offlineHandler, 5000);
+        }
+    };
+
+    xhr.send();
+    /*fetch(url)
         .then(response => {
             if (response.redirected && response.url === host + "/canvas/"){
                 loadImage();
                 callback([]);
             } else {
-                response.json();
+                response.json().then(r => {
+                    callback(r)
+                })
             }
         })
-        .then(data => {
-            callback(data);
-        })
         .catch(error => {
+            console.log("Error: ", error);
             callback([]);
-        });
+        });*/
 }
 
 function hexToRgb(hex) {
@@ -136,6 +156,7 @@ function changePixel(x, y, color){
 function updateNewPixels() {
 
     getNewPixels(function (data){
+        console.log("Rcv ", data);
         if (data.length !== 0){
             data.forEach(function(pixel){
                 changePixel(pixel[0], pixel[1], pixel[2]);
@@ -144,4 +165,8 @@ function updateNewPixels() {
     });
 
     updateTime();
+}
+
+function offlineHandler(){
+
 }

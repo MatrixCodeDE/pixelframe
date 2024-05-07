@@ -1,7 +1,7 @@
 import time
 from io import BytesIO
 
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Response
 from fastapi.responses import RedirectResponse, StreamingResponse
 from PIL import Image
 
@@ -94,7 +94,7 @@ class CanvasAPI:
                 )
             return "%02x%02x%02x" % pixel
 
-        @self.router.post("/pixel")
+        @self.router.post("/pixel", status_code=201)
         def set_pixel(x: int, y: int, color: str):
             """
             # Set pixel color
@@ -126,12 +126,16 @@ class CanvasAPI:
             self.canvas.add_pixel(x, y, r, g, b, a)
 
         @self.router.get("/since")
-        def pixel_since(timestamp: int):
+        def pixel_since(timestamp: int, response: Response):
             """
             # Canvas changes since timestamp
             Returns all pixels changed since the given UNIX timestamp
             """
             out = self.canvas.get_pixel_since(timestamp)
             if out is None:
+                print("redirect")
                 return RedirectResponse(url="/canvas/")
+            if out:
+                print("Resp", out)
+                response.status_code = 201
             return out

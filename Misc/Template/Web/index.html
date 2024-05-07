@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>PixelFrame</title>
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
     <link rel="stylesheet" href="static/canvas.css">
     <link rel="stylesheet" href="static/navbar.css">
 </head>
 <body>
     <div class="navigation">
-        <a class="title">Hello</a>
+        <div class="title">
+            <img class="title-logo" src="static/icon.png" alt="by Matrix">
+            <a class="title-text">PixelFrame</a>
+        </div>
         <ul class="navbar">
             <li class="nav-box nav-first">
-                <a class="nav-item active" href="/">Canvas</a>
+                <a class="nav-item nav-active" href="/">Canvas</a>
             </li>
             <li class="nav-box">
                 <a class="nav-item" href="/docs">API</a>
@@ -24,10 +28,10 @@
             </li>
         </ul>
     </div>
+    <div class="spacer"></div>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
     </div>
-
     <script src="static/canvas.js"></script>
 </body>
 </html>
