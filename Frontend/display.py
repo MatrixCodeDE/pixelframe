@@ -11,6 +11,8 @@ from Canvas.canvas import Canvas
 from Config.config import Config
 from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import event_handler, logger
+from Stats.stats import Stats
+from Stats.stats import stats as statsobj
 
 
 class Display(PixelModule):
@@ -18,14 +20,18 @@ class Display(PixelModule):
     canvas: Canvas
     screen: Surface | SurfaceType | None
     loop_routine: Greenlet
+    stats: Stats
     show_stats: bool
 
     def __init__(self, canvas: Canvas):
         self.canvas = canvas
         self.config = canvas.config
+        self.stats = statsobj
         self.show_stats = self.config.visuals.statsbar.enabled
         pygame.init()
         pygame.mixer.quit()
+        icon = pygame.image.load("Misc/Template/Web/static/icon.png")
+        pygame.display.set_icon(icon)
         pygame.display.set_caption("PixelFrame")
         pygame.font.init()
         self.screen = pygame.display.set_mode(self.config.visuals.size.get_size())

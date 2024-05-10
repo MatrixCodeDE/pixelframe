@@ -10,8 +10,9 @@ from PIL import Image
 from Canvas.heart import Heart
 from Config.config import Config
 from Misc.Template.pixelmodule import PixelModule
-from Misc.utils import event_handler, logger
+from Misc.utils import event_handler, logger, hex_to_rgb
 from Stats.stats import Stats
+from Stats.stats import stats as statsobj
 
 
 class Pixel(object):
@@ -106,6 +107,7 @@ class Canvas(PixelModule):
         self._canvas = Image.new("RGB", self.config.visuals.size.get_size())
         self._heart = Heart(self.config)
         self.tasks = Queue()
+        self.stats = statsobj
         super().__init__("CANVAS")
 
     def stop(self):
@@ -191,7 +193,7 @@ class Canvas(PixelModule):
             g = (g2 * (0xFF - a) + (g * a)) / 0xFF
             b = (b2 * (0xFF - a) + (b * a)) / 0xFF
             self._heart.update_pixel(x, y, (r, g, b))
-        # self.stats.add_pixel(x, y)
+        self.stats.add_pixel(x, y)
 
     def get_pixel_color_count(self) -> dict[str, int]:
         """
@@ -199,18 +201,13 @@ class Canvas(PixelModule):
         Returns:
             A dict with the pixel count
         """
-        c = {}
-        for x in range(1, self.config.visuals.size.width):
-            for y in range(1, self.config.visuals.size.height):
-                r, g, b, a = self.get_pixel(x, y)
-                if r == g == b == 0:
-                    continue
-                cString = "#%02x%02x%02x / %d,%d,%d" % (r, g, b, r, g, b)
-                if cString in c:
-                    c[cString] += 1
-                else:
-                    c[cString] = 1
-        return c
+        pixels = self._heart.pixel_since(1)
+
+        colors = {}
+        for p in pixels:
+            col = f"{p} / " + ",".join(hex_to_rgb(p))
+            colors[col] = colors.get(col, 0) + 1
+        return colors
 
     def get_size(self) -> tuple[int, int]:
         """

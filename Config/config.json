@@ -11,7 +11,7 @@
       "enabled": true
     },
     "sockets": {
-      "enabled": false
+      "enabled": true
     },
     "web": {
       "force_reload": false

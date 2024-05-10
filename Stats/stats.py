@@ -1,17 +1,8 @@
-from typing import Optional
-
-
 class Stats:
-    canvas: Optional["Canvas"]
-    server: Optional["Socketserver"]
-
     pixelstats: dict[str, int]
 
-    def __init__(self, canvas: Optional["Canvas"], server: Optional["Socketserver"]):
-        self.canvas = canvas
-        self.server = server
+    def __init__(self):
         self.pixelstats = {}
-        self.canvas.set_stats(self)
 
     def add_pixel(self, x, y) -> None:
         index = f"{x}-{y}"
@@ -26,3 +17,6 @@ class Stats:
         for p in self.pixelstats.values():
             count += p
         return count
+
+
+stats = Stats()

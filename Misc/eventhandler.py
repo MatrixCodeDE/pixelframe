@@ -38,7 +38,7 @@ class EventHandler:
 
         return decorator
 
-    def trigger(self, name: str, *args, **kwargs) -> None:
+    def trigger(self, name: str, *args, **kwargs) -> bool:
         """
         Fires an existing event
         Args:
@@ -47,15 +47,17 @@ class EventHandler:
             **kwargs: Arbitrary keyword arguments
 
         Returns:
-            None
+            bool
         """
         if name in self.events:
             try:
                 self.events[name](self, *args, **kwargs)
+                return True
             except GreenletExit:
                 raise
             except:
                 logger.exception("Error in callback for %r", name)
+        return False
 
     def exit(self):
         for event, call in self.events.items():
