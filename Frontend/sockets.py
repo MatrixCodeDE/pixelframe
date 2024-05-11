@@ -228,7 +228,10 @@ class Socketserver(PixelModule):
         self.host = self.config.connection.host
         self.port = self.config.connection.ports.socket
         self.socket = socket3()
-        self.socket.bind((self.host, self.port))
+        try:
+            self.socket.bind((self.host, self.port))
+        except OSError as e:
+            logger.critical(f"Couldn't start socketserver on {self.host}:{self.port} - {e}")
         self.socket.listen()
         self.clients = {}
         super().__init__("SOCKSERV")
@@ -276,7 +279,7 @@ class Socketserver(PixelModule):
         super().register_events()
 
         @event_handler.register(f"{self.prefix}-PX")
-        def add_pixel(canvas: Canvas, client: Client, x, y, color=None):
+        def add_pixel(client: Client, x, y, color=None, *args, **kwargs):
             x, y = int(x), int(y)
             if color:
                 c = int(color, 16)
@@ -292,14 +295,14 @@ class Socketserver(PixelModule):
                     a = c & 0x000000FF
                 else:
                     return
-                canvas.add_pixel(x, y, r, g, b, a)
+                self.canvas.add_pixel(x, y, r, g, b, a)
                 client.send("PX Success")
             else:
-                r, g, b = canvas.get_pixel(x, y)
+                r, g, b = self.canvas.get_pixel(x, y)
                 client.send("PX %d %d %02x%02x%02x" % (x, y, r, g, b))
 
         @event_handler.register(f"{self.prefix}-HELP")
-        def on_help(canvas: Canvas, client: Client):
+        def on_help(client: Client, *args, **kwargs):
             help = "Commands:\n"
             help += ">>> HELP\n"
             help += ">>> STATS\n"
@@ -311,28 +314,25 @@ class Socketserver(PixelModule):
             client.send(help)
 
         @event_handler.register(f"{self.prefix}-STATS")
-        def callback(canvas: Canvas, client: Client):
-            d = canvas.get_pixel_color_count()
-            import operator
-
-            dSorted = sorted(d.items(), key=operator.itemgetter(1), reverse=True)
+        def callback(client: Client, *args, **kwargs):
+            d = self.canvas.get_pixel_color_count(True)
             dString = ""
-            for k, v in dSorted:
+            for k, v in d.items():
                 dString += str(k) + ":\t" + str(v) + "\n"
             client.send("Current pixel color distribution:\n" + dString)
 
         @event_handler.register(f"{self.prefix}-SIZE")
-        def on_size(canvas: Canvas, client: Client):
-            client.send("SIZE %d %d" % canvas.get_size())
+        def on_size(client: Client, *args, **kwargs):
+            client.send("SIZE %d %d" % self.canvas.get_size())
 
         @event_handler.register(f"{self.prefix}-EXIT")
-        def on_quit(canvas: Canvas, client: Client):
+        def on_quit(client: Client, *args, **kwargs):
             client.disconnect()
 
         if self.config.game.godmode.enabled:
 
             @event_handler.register(f"{self.prefix}-GODMODE")
-            def on_quit(canvas: Canvas, client: Client, mode):
+            def on_quit(client: Client, mode, *args, **kwargs):
                 if mode == "on":
                     client.set_pps(self.config.game.godmode.pps)
                     client.send("You are now god (%d pps)" % client.pps)

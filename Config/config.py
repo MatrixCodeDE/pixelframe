@@ -1,8 +1,5 @@
 import json
 import time
-from typing import Any
-
-from aiohttp import web
 
 from Misc.utils import NoFrontendException, confirm, logger
 

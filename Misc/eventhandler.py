@@ -47,11 +47,11 @@ class EventHandler:
             **kwargs: Arbitrary keyword arguments
 
         Returns:
-            bool
+            bool: weather the event was triggered or not
         """
         if name in self.events:
             try:
-                self.events[name](self, *args, **kwargs)
+                self.events[name](*args, **kwargs)
                 return True
             except GreenletExit:
                 raise

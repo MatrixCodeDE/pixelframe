@@ -195,7 +195,7 @@ class Canvas(PixelModule):
             self._heart.update_pixel(x, y, (r, g, b))
         self.stats.add_pixel(x, y)
 
-    def get_pixel_color_count(self) -> dict[str, int]:
+    def get_pixel_color_count(self, sorted: bool) -> dict[str, int]:
         """
         Gets a pixel count from the canvas
         Returns:
@@ -205,8 +205,10 @@ class Canvas(PixelModule):
 
         colors = {}
         for p in pixels:
-            col = f"{p} / " + ",".join(hex_to_rgb(p))
+            c = p[2]
+            col = f"{c} / " + ",".join(str(cl) for cl in hex_to_rgb(c))
             colors[col] = colors.get(col, 0) + 1
+
         return colors
 
     def get_size(self) -> tuple[int, int]:

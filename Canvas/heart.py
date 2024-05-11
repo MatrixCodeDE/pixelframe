@@ -50,7 +50,6 @@ class Heart:
         """
         self.data[y, x, :3] = np.array(value, dtype=np.uint8)
         self.data[y, x, 3:] = self.timestamp
-        print("updated")
 
     def get_pixel_color(self, x: int, y: int) -> tuple:
         """
