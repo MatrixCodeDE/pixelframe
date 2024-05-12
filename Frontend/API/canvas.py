@@ -81,6 +81,14 @@ class CanvasAPI:
             size = self.canvas.get_size()
             return {"x": size[0], "y": size[1]}
 
+        @self.router.get("/pps")
+        def get_pps():
+            """
+            # User pps
+            Returns the amount of pixels a user can place per second
+            """
+            return self.config.game.pps
+
         @self.router.get("/pixel")
         def get_pixel(x: int, y: int) -> str:
             """
@@ -94,7 +102,7 @@ class CanvasAPI:
                 )
             return "%02x%02x%02x" % pixel
 
-        @self.router.post("/pixel", status_code=201)
+        @self.router.put("/pixel", status_code=200)
         def set_pixel(x: int, y: int, color: str):
             """
             # Set pixel color
@@ -131,11 +139,11 @@ class CanvasAPI:
             # Canvas changes since timestamp
             Returns all pixels changed since the given UNIX timestamp
             """
+            redirect = RedirectResponse(url="/canvas/")
+            if self.config.frontend.web.force_reload:
+                return redirect
             out = self.canvas.get_pixel_since(timestamp)
             if out is None:
-                print("redirect")
-                return RedirectResponse(url="/canvas/")
-            if out:
-                print("Resp", out)
-                response.status_code = 201
+                return redirect
+            response.status_code = 200
             return out

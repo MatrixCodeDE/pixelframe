@@ -115,7 +115,7 @@ class Heart:
 
         out = pixels.tolist()
         # 1 Pixel = 5ms time * 200px = 1s reload time in browser
-        if len(out) > 200 or self.config.frontend.web.force_reload:
+        if len(out) > 200:
             return None
         return out
 

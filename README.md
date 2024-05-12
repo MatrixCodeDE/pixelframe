@@ -1,4 +1,9 @@
-# Pixelframe: Multiplayer canvas
+<div style="display: flex; align-items: center;">
+    <img src="https://raw.githubusercontent.com/MatrixCodeDE/pixelframe/main/Misc/icon.svg" width="100" alt="PixelFrame" title="PixelFrame by Matrix">
+    <div style="margin-left: 20px; display: flex; align-items: center;">
+        <h1 style="margin: 0;">Pixelframe: Multiplayer canvas</h1>
+    </div>
+</div>
 
 ## r/Place for hackers and computer scientists
 
@@ -6,59 +11,50 @@
 
 I wanted to use the Pixelflut project for a university project, but I found out that it was written in Python 2, which is heavily outdated, so I created this.
 
-## Features
+<h1>Features</h1>
 
 Since this is a rewrite of the entire original project, I also added some features the old one has not.
+## ⚡️ Fast Base
+Based on numpy, the new heart of the canvas is almost **6x faster&#42;** than the old version. It is also very efficient in performing actions on large data like a picture with metadata for every pixel.
 
-### Display
+> &#42;Based on calculations
 
-PyGame isn't exactly a new feature, but its optional now. It has a complete new base, so you can run it in for example a docker container. Also, you can display a stats bar for connection details and basic stats of the canvas when using in public.
+## 🖼 Webinterface
 
-### Webinterface
-
+Shows the canvas in a browser
 Can display the current canvas, also featuring the integrated Documentation on /docs and /redoc
 
-### API
+## 🖥 Local Display
 
-Based on FastAPI, can update pixels and also hosting the [Webinterface](#webinterface-coming-soon) \
+Displays the canvas on a local display connected to the host. \
+PyGame isn't exactly a new feature, but its optional now. Also, you can display a stats bar for connection details and basic stats of the canvas when using in public.
+
+> Note: this feature requires a host with graphic drivers, e.g. Docker containers won't work!
+
+## 📟 API
+
+Based on FastAPI, can update pixels and also hosting the [Webinterface](#-webinterface) \
 Usage [Coming Soon]
 
-### Interactive Sockets
+## 🔌 Interactive Sockets
 
 Like the old version, this project uses sockets to communicate with the players. You can set pixels, get pixel colors and even view stats for the whole canvas. New features are a timeout for the connection and a cooldown for spam protection.
 
-### Config
+## ⚙️ Config
 
 A config for creating templates and sharing them, made easy.
+<details>
+<summary>Options</summary>
 
+- Name
+- Game Rules
+- Frontends Settings
+- Connection Infos
+- Canvas Settings
+</details>
 
-## Usage: The Pixelflut Protocol
-
-PixelFrame uses the base of the Pixelflut Protocol for its commands. Therefore, the basic commands are the same:
-
-* `HELP`: Returns a short introductional help text.
-* `SIZE`: Returns the size of the visible canvas in pixel as `SIZE <w> <h>`.
-* `PX <x> <y>`: Return the current color of a pixel as `PX <x> <y> <rrggbbaa>`.
-* `PX <x> <y> <rrggbb(aa)>`: Draw a single pixel at position (x, y) with the specified hex color code.
-  If the color code contains an alpha channel value, it is blended with the current color of the pixel.
-* `STATS`: Returns the pixel color distribution of the canvas (except black) ordered by pixel frequency.
-* `EXIT`: Just like the SSH-command `exit`, disconnect from the server
-
-Example:
-
-    $ echo "SIZE" | nc pixelflut.example.com 1234
-    > SIZE 1920 1080
-    $ echo "PX 100 200" | nc pixelflut.example.com 1234
-    > PX 100 200 f6a8c3
-    $ echo "PX 710 80 fbba97" | nc pixelflut.example.com 1234
-    > PX Success
-    $ echo "PX 711 80 fbba97" | nc pixelflut.example.com 1234
-    > You are on cooldown for 21 milliseconds
-
-Anyway, due to a rewrite of the connection handler with a specific timeout, multiple commands seperated by `\n` are **not** supported. But the server will answer to invalid commands, even if you are on cooldown.
-
-## Server
-### Installation
+# Server
+## Installation
 
 ```shell
 cd pixelframe

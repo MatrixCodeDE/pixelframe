@@ -1,0 +1,40 @@
+@host = localhost
+@port = 8000
+
+
+### Webservice
+GET http://{{host}}:{{port}}/
+Accept: text/html, application/xhtml+xml
+
+### Status
+GET http://{{host}}:{{port}}/status
+Accept: application/json
+
+### Docs
+GET http://{{host}}:{{port}}/docs
+Accept: text/html, application/xhtml+xml
+
+
+### Canvas
+GET http://{{host}}:{{port}}/canvas/
+Accept: image/webp
+
+### Canvas - Size
+GET http://{{host}}:{{port}}/canvas/size
+Accept: application/json
+
+### Canvas - PPS
+GET http://{{host}}:{{port}}/canvas/pps
+Accept: application/json
+
+### Canvas - Pixel (GET)
+GET http://{{host}}:{{port}}/canvas/pixel?x=0&y=0
+Accept: application/json
+
+### Canvas - Pixel (PUT)
+PUT http://{{host}}:{{port}}/canvas/pixel?x=1&y=1&color=ff44ff
+Accept: application/json
+
+### Canvas - Since (GET)
+GET http://{{host}}:{{port}}/canvas/since?timestamp=1715533119
+Accept: application/json

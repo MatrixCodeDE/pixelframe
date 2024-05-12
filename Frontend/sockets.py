@@ -231,7 +231,9 @@ class Socketserver(PixelModule):
         try:
             self.socket.bind((self.host, self.port))
         except OSError as e:
-            logger.critical(f"Couldn't start socketserver on {self.host}:{self.port} - {e}")
+            logger.critical(
+                f"Couldn't start socketserver on {self.host}:{self.port} - {e}"
+            )
         self.socket.listen()
         self.clients = {}
         super().__init__("SOCKSERV")

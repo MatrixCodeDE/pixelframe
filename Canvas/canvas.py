@@ -10,7 +10,7 @@ from PIL import Image
 from Canvas.heart import Heart
 from Config.config import Config
 from Misc.Template.pixelmodule import PixelModule
-from Misc.utils import event_handler, logger, hex_to_rgb
+from Misc.utils import event_handler, hex_to_rgb, logger
 from Stats.stats import Stats
 from Stats.stats import stats as statsobj
 

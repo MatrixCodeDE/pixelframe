@@ -9,9 +9,7 @@ from Misc.utils import status
 
 def custom_swagger_ui_html(title, favicon):
     html_content = get_swagger_ui_html(
-        openapi_url="/openapi.json",
-        title=title,
-        swagger_favicon_url=favicon
+        openapi_url="/openapi.json", title=title, swagger_favicon_url=favicon
     )
     html_content_body = html_content.body.decode("utf-8")
 
@@ -44,7 +42,7 @@ def custom_swagger_ui_html(title, favicon):
         <link rel="stylesheet" href="static/navbar.css">
         </head>
         """,
-        1
+        1,
     )
     html_content_body = html_content_body.replace(
         "<body>",
@@ -72,7 +70,7 @@ def custom_swagger_ui_html(title, favicon):
             </div>
             <div class="spacer"></div>
         """,
-        1
+        1,
     )
     return HTMLResponse(content=html_content_body, status_code=html_content.status_code)
 
@@ -87,7 +85,9 @@ class WebserviceAPI:
         self.config = config
         self.router = APIRouter()
         self.api.mount("/web", StaticFiles(directory="Misc/Template/Web/"), name="web")
-        self.api.mount("/static", StaticFiles(directory="Misc/Template/Web/static"), name="static")
+        self.api.mount(
+            "/static", StaticFiles(directory="Misc/Template/Web/static"), name="static"
+        )
         self.register_routes()
 
     def register_routes(self):
