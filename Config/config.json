@@ -11,7 +11,7 @@
       "enabled": true
     },
     "sockets": {
-      "enabled": true
+      "enabled": false
     },
     "web": {
       "force_reload": false
@@ -31,7 +31,7 @@
       "height": 1080
     },
     "statsbar": {
-      "enabled": true,
+      "enabled": false,
       "size": 30
     }
   },

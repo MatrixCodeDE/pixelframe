@@ -61,7 +61,7 @@ def custom_swagger_ui_html(title, favicon):
                         <a class="nav-item nav-active" href="/docs">API</a>
                     </li>
                     <li class="nav-box">
-                        <a class="nav-item">Guide</a>
+                        <a class="nav-item" href="https://github.com/MatrixCodeDE/pixelframe/blob/main/GUIDE.md">Guide</a>
                     </li>
                     <li class="nav-box nav-last">
                         <a class="nav-item" href="https://github.com/MatrixCodeDE/pixelframe">GitHub</a>
