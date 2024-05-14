@@ -6,6 +6,20 @@ let lastUpdate;
 let interval;
 
 function init(event) {
+
+    const navbarContainer = document.getElementById("navbarContainer");
+
+    // Fetch the navbar.html content
+    fetch("static/navbar.html")
+        .then(response => response.text())
+        .then(data => {
+            // Set the content of the navbarContainer to the fetched navbar.html content
+            navbarContainer.innerHTML = data;
+        })
+        .catch(error => {
+            console.error("Error fetching navbar:", error);
+        });
+
     host = "http://" + window.location.hostname + ":" + window.location.port;
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
