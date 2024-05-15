@@ -57,11 +57,11 @@ class PixelAPI(PixelModule):
         """
         The loop for the API
         """
-        logger.info(f"Starting Process: {self.prefix}.fastAPI")
+        logger.info(f"Starting Process: {self.prefix}.loop")
 
         uvicorn.run(
             self.base_api,
             host=self.config.connection.host,
             port=self.config.connection.ports.api,
-            log_level=logging.WARN,
+            # log_level=logging.WARN,
         )

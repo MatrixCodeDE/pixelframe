@@ -6,9 +6,11 @@ gevent.monkey.patch_all()
 from gevent import spawn
 
 from Canvas.canvas import Canvas
+from Clients.manager import manager as umanager
 from Config.config import Config
-from Frontend.sockets import Client
-from Misc.utils import event_handler, logger, status
+from Frontend.sockets import SClient
+from Misc.eventhandler import event_handler
+from Misc.utils import logger, status
 from Stats.stats import Stats
 
 
@@ -32,6 +34,10 @@ def main():
 
     config = Config(args.configfile)
     status.update("config", config)
+    logger.info(f"Loaded config from {args.configfile}")
+
+    manager = umanager
+    manager.set_config(config)
 
     canvas = Canvas(config)
     main_loop = spawn(canvas.loop)
@@ -62,9 +68,7 @@ def main():
         api_loop = spawn(api.loop)
         coroutines.append(api_loop)
 
-    # stats = Stats(canvas, server)
-
-    logger.info("Starting Processes")
+    logger.info("Starting Processes...")
 
     try:
         gevent.joinall(coroutines)

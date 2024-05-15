@@ -63,3 +63,6 @@ class EventHandler:
         for event, call in self.events.items():
             if "exit" in event:
                 call()
+
+
+event_handler = EventHandler()

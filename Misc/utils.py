@@ -3,12 +3,8 @@ from typing import Any
 
 import numpy as np
 
-from Misc.eventhandler import EventHandler
-
 logger = logging.getLogger("pixelframe")
 logging.basicConfig(level=logging.INFO)
-
-event_handler = EventHandler()
 
 
 class Status:
@@ -115,3 +111,10 @@ def hex_to_rgb(hexa: str) -> tuple[int, int, int] | tuple[int, int, int, int] | 
         return r, g, b, a
     else:
         return None
+
+
+def cooldown_to_text(cooldown: float) -> str:
+    if cooldown < 1:
+        return f"{cooldown*1000:.2f} milliseconds"
+    else:
+        return f"{cooldown:.2f} seconds"

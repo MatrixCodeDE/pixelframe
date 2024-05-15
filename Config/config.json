@@ -8,10 +8,12 @@
       "fps": 10
     },
     "api": {
-      "enabled": true
+      "enabled": true,
+      "enable_admin": true
     },
     "sockets": {
-      "enabled": false
+      "enabled": true,
+      "enable_admin": false
     },
     "web": {
       "force_reload": false

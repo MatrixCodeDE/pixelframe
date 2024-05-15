@@ -9,8 +9,9 @@ from pygame import Surface, SurfaceType
 
 from Canvas.canvas import Canvas
 from Config.config import Config
+from Misc.eventhandler import event_handler
 from Misc.Template.pixelmodule import PixelModule
-from Misc.utils import event_handler, logger
+from Misc.utils import logger
 from Stats.stats import Stats
 from Stats.stats import stats as statsobj
 

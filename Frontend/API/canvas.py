@@ -1,12 +1,14 @@
 import time
 from io import BytesIO
 
-from fastapi import APIRouter, FastAPI, HTTPException, Response
+from fastapi import APIRouter, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse, StreamingResponse
 from PIL import Image
 
 from Canvas.canvas import Canvas
+from Clients.manager import manager
 from Config.config import Config
+from Misc.utils import cooldown_to_text
 
 
 class CanvasAPI:
@@ -82,12 +84,12 @@ class CanvasAPI:
             return {"x": size[0], "y": size[1]}
 
         @self.router.get("/pps")
-        def get_pps():
+        def get_pps(request: Request):
             """
             # User pps
             Returns the amount of pixels a user can place per second
             """
-            return self.config.game.pps
+            return manager.client(request.client.host).pps
 
         @self.router.get("/pixel")
         def get_pixel(x: int, y: int) -> str:
@@ -103,7 +105,7 @@ class CanvasAPI:
             return "%02x%02x%02x" % pixel
 
         @self.router.put("/pixel", status_code=200)
-        def set_pixel(x: int, y: int, color: str):
+        def set_pixel(x: int, y: int, color: str, request: Request):
             """
             # Set pixel color
             Sets the color of a given pixel
@@ -111,6 +113,12 @@ class CanvasAPI:
             if not self.canvas.pixel_in_bounds(x, y):
                 raise HTTPException(
                     status_code=422, detail="Pixel out of bounds. Try /canvas/size"
+                )
+            cd = manager.client(request.client.host).on_cooldown()
+            print(cd, manager.client(request.client.host))
+            if cd != 0:
+                raise HTTPException(
+                    status_code=403, detail=f"On cooldown for {cooldown_to_text(cd)}"
                 )
 
             try:
@@ -132,6 +140,7 @@ class CanvasAPI:
             except ValueError:
                 raise HTTPException(status_code=422, detail="Wrong color hex format.")
             self.canvas.add_pixel(x, y, r, g, b, a)
+            manager.client(request.client.host).update_cooldown()
 
         @self.router.get("/since")
         def pixel_since(timestamp: int, response: Response):

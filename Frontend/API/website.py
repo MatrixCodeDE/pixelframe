@@ -97,11 +97,11 @@ class WebserviceAPI:
             # Web Service
             Get the web service for displaying the canvas on your own device
             """
-            return RedirectResponse("/web/index.html")
+            return RedirectResponse("/web/index.html", status_code=301)
 
         @self.router.get("/docs", include_in_schema=False)
         def custom_swagger_ui():
-            return custom_swagger_ui_html(self.api.title, "static/favicon.ico")
+            return custom_swagger_ui_html(self.api.title, "/static/favicon.ico")
 
         @self.router.get("/status")
         def get_status():

@@ -6,12 +6,14 @@ from gevent._socket3 import socket as socket3
 from gevent.lock import RLock
 
 from Canvas.canvas import Canvas
+from Clients.manager import Manager, manager
 from Config.config import Config
+from Misc.eventhandler import event_handler
 from Misc.Template.pixelmodule import PixelModule
-from Misc.utils import event_handler, logger
+from Misc.utils import logger
 
 
-class Client:
+class SClient:
     """
     The client object (used for the server)
     Attributes:
@@ -40,10 +42,11 @@ class Client:
     lock: RLock
     kill: bool = False
     timeout: bool
+    manager: Manager
 
     def __init__(
         self,
-        canvas: Optional["Canvas"],
+        canvas: Canvas,
         ip: str,
         port: int,
         pps: int | float = 30,
@@ -61,11 +64,10 @@ class Client:
         self.canvas = canvas
         self.ip = ip
         self.port = port
-        self.pps = pps
-        self.cooldown = 1.0 / self.pps
+        self.mclient = manager.add_client(self.ip)
+        self.mclient.connect()
         self.socket = None
         self.connected_at = time.time()
-        self.cooldown_until = 0
         self.lock = RLock()
         self.timeout = False
 
@@ -93,10 +95,6 @@ class Client:
                 except BrokenPipeError as e:
                     logger.error(e)
 
-    def set_pps(self, pps: int | float) -> None:
-        self.pps = pps
-        self.cooldown = 1.0 / self.pps
-
     def nospam(self, line: str) -> None:
         """
         Sends a nospam line to the client socket
@@ -118,8 +116,10 @@ class Client:
         self.kill = False
         self.socket.settimeout(self.canvas.config.connection.timeout)
         self.connected = True
+        self.mclient.connect()
+        print(socket)
 
-        logger.info(f"Client connected: {self.ip}:{self.port}")
+        logger.info(f"Socket Client connected: {self.ip}:{self.port}")
 
         with self.lock:
             self.socket = socket
@@ -145,16 +145,15 @@ class Client:
                 command = arguments.pop(0).upper()
 
                 if command == "PX" and len(arguments) != 2:
-                    now = time.time()
-                    cd = self.cooldown_until - now
-                    if cd < 0:
+                    cd = self.mclient.on_cooldown()
+                    if not cd:
                         if not event_handler.trigger(
                             f"{self.super_prefix}-%s" % command.upper(),
                             self,
                             *arguments,
                         ):
                             self.send("Wrong arguments")
-                        self.cooldown_until = now + self.cooldown
+                        self.mclient.update_cooldown()
 
                     else:
                         if cd >= 1.0:
@@ -165,6 +164,7 @@ class Client:
                             )
 
                 else:
+                    print(f"{self.super_prefix}-%s" % command.upper(), self, *arguments)
                     if not event_handler.trigger(
                         f"{self.super_prefix}-%s" % command.upper(), self, *arguments
                     ):
@@ -204,7 +204,7 @@ class Socketserver(PixelModule):
         host (str): The host address of the server
         port (int): The port of the server
         socket(socket): The socket server
-        clients (dict[str, Client]): The list of clients
+        clients (dict[str, SClient]): The list of clients
         cpps (int | float): Refers to default pps of the clients
     """
 
@@ -213,7 +213,8 @@ class Socketserver(PixelModule):
     host: str
     port: int
     socket: socket3
-    clients: dict[str, Client]
+    clients: dict[str, SClient]
+    self_disable: bool = False
     cpps: int | float
 
     def __init__(self, canvas: Canvas, config: Config) -> None:
@@ -234,6 +235,7 @@ class Socketserver(PixelModule):
             logger.critical(
                 f"Couldn't start socketserver on {self.host}:{self.port} - {e}"
             )
+            self.self_disable = True
         self.socket.listen()
         self.clients = {}
         super().__init__("SOCKSERV")
@@ -252,17 +254,19 @@ class Socketserver(PixelModule):
         """
         The loop for handling the client connections
         """
+        if self.self_disable:
+            return
         logger.info(f"Starting Process: {self.prefix}.loop")
         while self.running:
             sock, addr = self.socket.accept()
             ip, port = addr
 
-            client: Client = self.clients.get(ip)
+            client: SClient = self.clients.get(ip)
             if client:
                 client.disconnect()
                 client.task.kill()
             else:
-                client = self.clients[ip] = Client(
+                client = self.clients[ip] = SClient(
                     self.canvas, ip, port, self.config.game.pps
                 )
 
@@ -278,10 +282,12 @@ class Socketserver(PixelModule):
         return len(connected)
 
     def register_events(self):
+        if self.self_disable:
+            return
         super().register_events()
 
         @event_handler.register(f"{self.prefix}-PX")
-        def add_pixel(client: Client, x, y, color=None, *args, **kwargs):
+        def add_pixel(client: SClient, x, y, color=None, *args, **kwargs):
             x, y = int(x), int(y)
             if color:
                 c = int(color, 16)
@@ -304,7 +310,7 @@ class Socketserver(PixelModule):
                 client.send("PX %d %d %02x%02x%02x" % (x, y, r, g, b))
 
         @event_handler.register(f"{self.prefix}-HELP")
-        def on_help(client: Client, *args, **kwargs):
+        def on_help(client: SClient, *args, **kwargs):
             help = "Commands:\n"
             help += ">>> HELP\n"
             help += ">>> STATS\n"
@@ -316,7 +322,7 @@ class Socketserver(PixelModule):
             client.send(help)
 
         @event_handler.register(f"{self.prefix}-STATS")
-        def callback(client: Client, *args, **kwargs):
+        def callback(client: SClient, *args, **kwargs):
             d = self.canvas.get_pixel_color_count(True)
             dString = ""
             for k, v in d.items():
@@ -324,17 +330,21 @@ class Socketserver(PixelModule):
             client.send("Current pixel color distribution:\n" + dString)
 
         @event_handler.register(f"{self.prefix}-SIZE")
-        def on_size(client: Client, *args, **kwargs):
+        def on_size(client: SClient, *args, **kwargs):
             client.send("SIZE %d %d" % self.canvas.get_size())
 
+        @event_handler.register(f"{self.prefix}-PPS")
+        def on_pps(client: SClient, *args, **kwargs):
+            client.send("PPS %d" % client.mclient.pps)
+
         @event_handler.register(f"{self.prefix}-EXIT")
-        def on_quit(client: Client, *args, **kwargs):
+        def on_quit(client: SClient, *args, **kwargs):
             client.disconnect()
 
         if self.config.game.godmode.enabled:
 
             @event_handler.register(f"{self.prefix}-GODMODE")
-            def on_quit(client: Client, mode, *args, **kwargs):
+            def on_quit(client: SClient, mode, *args, **kwargs):
                 if mode == "on":
                     client.set_pps(self.config.game.godmode.pps)
                     client.send("You are now god (%d pps)" % client.pps)

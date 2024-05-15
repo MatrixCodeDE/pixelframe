@@ -26,16 +26,20 @@ class Display:
 
 class Api:
     enabled: bool
+    enable_admin: bool
 
-    def __init__(self, enabled: bool):
+    def __init__(self, enabled: bool, enable_admin: bool):
         self.enabled = enabled
+        self.enable_admin = enable_admin
 
 
 class Sockets:
     enabled: bool
+    enable_admin: bool
 
-    def __init__(self, enabled: bool):
+    def __init__(self, enabled: bool, enable_admin: bool):
         self.enabled = enabled
+        self.enable_admin = enable_admin
 
 
 class Web:

@@ -1,4 +1,4 @@
-from Misc.utils import event_handler
+from Misc.eventhandler import event_handler
 
 
 class PixelModule:

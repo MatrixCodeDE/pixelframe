@@ -14,7 +14,7 @@ class Manager:
         self.config = config
 
     def add_client(self, ip: str):
-        client = Client(self.config, ip=ip)
+        client = Client(self.config, ip)
         self.clients[str(client)] = client
         return client
 
