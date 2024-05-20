@@ -21,6 +21,9 @@
                 <a class="nav-item" href="/docs">API</a>
             </li>
             <li class="nav-box">
+                <a class="nav-item" href="/status">Status</a>
+            </li>
+            <li class="nav-box">
                 <a class="nav-item" href="https://github.com/MatrixCodeDE/pixelframe/blob/main/GUIDE.md">Guide</a>
             </li>
             <li class="nav-box nav-last">
@@ -28,10 +31,16 @@
             </li>
         </ul>
     </div>
+
     <div class="spacer"></div>
+
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
     </div>
+
+    <a id="offlineText" class="hidden"></a>
+    <div id="offlineOverlay" class="hidden"></div>
+
     <script src="canvas.js"></script>
 </body>
 </html>
