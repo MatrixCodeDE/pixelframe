@@ -98,22 +98,22 @@ function loadImage(){
 }
 
 function getNewPixels(callback) {
-    let url = host + "/canvas/since?timestamp=" + lastUpdate;
-    let xhr = new XMLHttpRequest();
-
-    xhr.open("GET", url, true);
-    xhr.onload = function (event){
-        let pix = xhr.response;
-        console.log(pix);
-    };
-
-    xhr.onerror = function (event) {
-        if (xhr.status === 0){
-            updateInterval(offlineHandler, 5000);
-        }
-    };
-
-    xhr.send();
+    let url = host + "/canvas/since?timestamp=" + (lastUpdate - 1); // -1 to ensure pixels weren't updated in the meantime
+    fetch(url)
+        .then(response => {
+            if (response.redirected && response.url === host + "/canvas/"){
+                loadImage();
+                callback([]);
+            } else {
+                response.json().then(r => {
+                    callback(r)
+                })
+            }
+        })
+        .catch(error => {
+            console.log("Error: ", error);
+            callback([]);
+        });
 }
 
 function hexToRgb(hex) {
@@ -141,7 +141,6 @@ function changePixel(x, y, color){
 function updateNewPixels() {
 
     getNewPixels(function (data){
-        console.log("Rcv ", data);
         if (data.length !== 0){
             data.forEach(function(pixel){
                 changePixel(pixel[0], pixel[1], pixel[2]);
