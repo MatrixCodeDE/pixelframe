@@ -15,30 +15,6 @@ def custom_swagger_ui_html(title, favicon):
         openapi_url="/openapi.json", title=title, swagger_favicon_url=favicon
     )
     html_content_body = html_content.body.decode("utf-8")
-
-    '''html_content_body = html_content_body.replace(
-        "</body>",
-        """
-            <script type="text/javascript">
-                var button = document.createElement("button");
-                button.innerText = "Canvas";
-                button.classList.add("main");
-                button.style.position = "fixed";
-                button.style.top = "50px";
-                button.style.right = "20px";
-                button.style.zIndex = "1000";
-                button.style.fontFamily = "sans-serif";
-                button.style.fontSize = "36px";
-                button.style.fontWeight = "bold";
-                button.style.color = "#3b4151";
-                button.onclick = function() {
-                    window.location.href = "/";
-                };
-                document.body.appendChild(button);
-            </script>
-        </body>""",
-        1,
-    )'''
     html_content_body = html_content_body.replace(
         "</head>",
         """
@@ -53,7 +29,7 @@ def custom_swagger_ui_html(title, favicon):
         <body>
             <div class="navigation">
                 <div class="title">
-                    <img class="title-logo" src="static/icon.png" alt="by Matrix">
+                    <img class="title-logo" src="static/icon.png" alt="Logo by Matrix">
                     <a class="title-text">PixelFrame</a>
                 </div>
                 <ul class="navbar">
@@ -62,6 +38,9 @@ def custom_swagger_ui_html(title, favicon):
                     </li>
                     <li class="nav-box">
                         <a class="nav-item nav-active" href="/docs">API</a>
+                    </li>
+                    <li class="nav-box">
+                        <a class="nav-item" href="/status">Status</a>
                     </li>
                     <li class="nav-box">
                         <a class="nav-item" href="https://github.com/MatrixCodeDE/pixelframe/blob/main/GUIDE.md">Guide</a>

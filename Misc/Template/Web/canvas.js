@@ -17,6 +17,7 @@ function init(event) {
 
 function updateInterval(func, timeout){
     clearInterval(interval);
+    console.log("Setting Interval to", func.name);
     interval = setInterval(func, timeout);
 }
 
@@ -98,22 +99,28 @@ function loadImage(){
 }
 
 function getNewPixels(callback) {
-    let url = host + "/canvas/since?timestamp=" + lastUpdate;
-    let xhr = new XMLHttpRequest();
-
-    xhr.open("GET", url, true);
-    xhr.onload = function (event){
-        let pix = xhr.response;
-        console.log(pix);
-    };
-
-    xhr.onerror = function (event) {
-        if (xhr.status === 0){
-            updateInterval(offlineHandler, 5000);
-        }
-    };
-
-    xhr.send();
+    let url = host + "/canvas/since?timestamp=" + (lastUpdate - 1); // -1 to ensure pixels weren't updated in the meantime
+    fetch(url)
+        .then(response => {
+            if (response.redirected && response.url === host + "/canvas/"){
+                loadImage();
+                callback([]);
+            } else {
+                if (response.status === 404){
+                    throw "offline";
+                }
+                response.json().then(r => {
+                    callback(r)
+                })
+            }
+        })
+        .catch(error => {
+            console.log("Error: ", error);
+            if (error instanceof TypeError){
+                updateInterval(offlineHandler, 6000);
+            }
+            callback([]);
+        });
 }
 
 function hexToRgb(hex) {
@@ -141,7 +148,6 @@ function changePixel(x, y, color){
 function updateNewPixels() {
 
     getNewPixels(function (data){
-        console.log("Rcv ", data);
         if (data.length !== 0){
             data.forEach(function(pixel){
                 changePixel(pixel[0], pixel[1], pixel[2]);
@@ -152,6 +158,41 @@ function updateNewPixels() {
     updateTime();
 }
 
-function offlineHandler(){
+function countdown(t) {
+    let offlineText = document.getElementById("offlineText");
+    setTimeout(() => {
+        let snd = " in " + t;
+        if (t === 0)
+            snd = ""
+        offlineText.innerHTML = "You're not connected!<br>Retrying" + snd + "...";
+        if (t > 0) {
+            countdown(t - 1);
+        }
+    }, 1000);
+}
 
+function offlineHandler(){
+    let offlineDiv = document.getElementById("offlineOverlay");
+
+    console.log(offlineDiv, offlineText);
+    offlineDiv.classList.remove("hidden");
+    offlineText.classList.remove("hidden");
+    let url = host + "/canvas/since?timestamp=" + (lastUpdate);
+    let connected = false;
+    fetch(url)
+        .then(response => {
+            if (response.status === 404){
+                throw "offline";
+            }
+            loadImage();
+            updateInterval(updateNewPixels, 1000);
+            offlineDiv.classList.add("hidden");
+            offlineText.classList.add("hidden");
+            return;
+        })
+        .catch(error => {
+            console.log("Still offline");
+        });
+    updateTime();
+    countdown(5);
 }
