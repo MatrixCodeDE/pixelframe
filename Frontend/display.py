@@ -17,6 +17,16 @@ from Stats.stats import stats as statsobj
 
 
 class Display(PixelModule):
+    """
+    The display module for the frontend display
+    Attributes:
+        config (Config): The configuration
+        canvas (Canvas): The canvas with every layer
+        screen (Surface): The screen to draw on
+        loop_routine (Greenlet): The Greenlet with the loop
+        stats (Stats): The stats of the whole canvas (if displayed)
+        show_stats (bool): Whether the stats should be shown
+    """
     config: Config
     canvas: Canvas
     screen: Surface | SurfaceType | None

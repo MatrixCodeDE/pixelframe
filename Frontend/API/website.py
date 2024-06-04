@@ -8,6 +8,9 @@ from Misc.utils import status
 
 
 def custom_swagger_ui_html(title, favicon):
+    """
+    Returns a custom swagger ui with the navigation bar
+    """
     html_content = get_swagger_ui_html(
         openapi_url="/openapi.json", title=title, swagger_favicon_url=favicon
     )
@@ -76,6 +79,13 @@ def custom_swagger_ui_html(title, favicon):
 
 
 class WebserviceAPI:
+    """
+    The endpoint for all web stuff
+    Attributes:
+        api (FastAPI): The base API
+        config (Config): The configuration
+        router (APIRouter): The router (sub endpoint) of the API for the web stuff
+    """
     api: FastAPI
     config: Config
     router: APIRouter

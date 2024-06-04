@@ -282,6 +282,9 @@ class Socketserver(PixelModule):
         return len(connected)
 
     def register_events(self):
+        """
+        Registers all events needed for the sockets
+        """
         if self.self_disable:
             return
         super().register_events()

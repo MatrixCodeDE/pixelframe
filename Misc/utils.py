@@ -8,6 +8,14 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Status:
+    """
+    The status of every module
+    Attributes:
+        config (Config): The configuration
+        api (bool): If the API is enabled
+        display (bool): If the display is enabled
+        socketserver (bool): If the socketserver (netcat) is enabled
+    """
     config: None
     api: bool
     display: bool
@@ -60,11 +68,13 @@ status = Status()
 
 
 class NoFrontendException(Exception):
+    """Exception if no frontend is enabled"""
     def __init__(self):
         super().__init__("You cant disable all frontends!")
 
 
 def confirm():
+    """CMD input confimation (Y/N)"""
     inp = input("Do you want to continue? (Y/N) ")
     if inp.lower() == "y":
         return True
@@ -73,6 +83,7 @@ def confirm():
 
 
 def time_to_np(ts: int | float) -> np.ndarray:
+    """Converts a timestamp to a numpy array for the canvas"""
     if isinstance(ts, float):
         ts = int(ts)
     ts_bytes = ts.to_bytes(4, byteorder="big")
@@ -80,6 +91,7 @@ def time_to_np(ts: int | float) -> np.ndarray:
 
 
 def np_to_time(ts: np.ndarray) -> int:
+    """Converts a canvas numpy array entry to a timestamp"""
     ts_bytes = bytes(ts)
     return int.from_bytes(ts_bytes, byteorder="big")
 
@@ -90,6 +102,7 @@ def rgb_to_hex(
     b: int | np.uint8,
     a: int | np.uint8 | None = None,
 ) -> str:
+    """Transforms  RGB(A) to a hexadecimal string"""
     if a:
         return "%02x%02x%02x%02x" % (r, g, b, a)
     else:
@@ -97,6 +110,7 @@ def rgb_to_hex(
 
 
 def hex_to_rgb(hexa: str) -> tuple[int, int, int] | tuple[int, int, int, int] | None:
+    """Transforms a hexadecimal string to RGB(A)"""
     c = int(hexa, 16)
     if len(hexa) == 6:
         r = (c & 0xFF0000) >> 16
@@ -114,6 +128,7 @@ def hex_to_rgb(hexa: str) -> tuple[int, int, int] | tuple[int, int, int, int] | 
 
 
 def cooldown_to_text(cooldown: float) -> str:
+    """Transforms the cooldown to a string (seconds/milliseconds)"""
     if cooldown < 1:
         return f"{cooldown*1000:.2f} milliseconds"
     else:

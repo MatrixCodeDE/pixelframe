@@ -144,14 +144,14 @@ class Config(object):
         self.config_file = config_file
         self.load_config()
 
-    def get_config(self) -> dict:
+    def read_config(self) -> dict:
         with open(self.config_file, "r") as f:
             conf = json.load(f)
         return conf
 
     def load_config(self):
         try:
-            conf = self.get_config()
+            conf = self.read_config()
             self.general = General(**conf["general"])
             self.frontend = Frontend(**conf["frontend"])
             self.connection = Connection(**conf["connection"])
