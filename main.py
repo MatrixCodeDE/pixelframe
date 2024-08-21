@@ -37,6 +37,9 @@ def main():
 
     args = parser.parse_args()
 
+    if args.debugging:
+        logger.info(f"Starting in DEBUG Mode")
+
     config = Config(args.configfile, args.debugging)
     status.update("config", config)
     logger.info(f"Loaded config from {args.configfile}")
