@@ -117,7 +117,6 @@ class SClient:
         self.socket.settimeout(self.canvas.config.connection.timeout)
         self.connected = True
         self.mclient.connect()
-        print(socket)
 
         logger.info(f"Socket Client connected: {self.ip}:{self.port}")
 
