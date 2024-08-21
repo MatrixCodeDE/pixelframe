@@ -8,10 +8,7 @@ from gevent import spawn
 from Canvas.canvas import Canvas
 from Clients.manager import manager as umanager
 from Config.config import Config
-from Frontend.sockets import SClient
-from Misc.eventhandler import event_handler
 from Misc.utils import logger, status
-from Stats.stats import Stats
 
 
 def main():
@@ -30,9 +27,17 @@ def main():
         help="specify a config file",
     )
 
+    parser.add_argument(
+        "-d",
+        "--debug",
+        dest="debugging",
+        action="store_true",
+        help="Aktiviert den Debug-Modus."
+    )
+
     args = parser.parse_args()
 
-    config = Config(args.configfile)
+    config = Config(args.configfile, args.debugging)
     status.update("config", config)
     logger.info(f"Loaded config from {args.configfile}")
 

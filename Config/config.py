@@ -134,14 +134,16 @@ class Game(object):
 
 class Config(object):
     config_file: str
+    debug: bool
     general: General
     frontend: Frontend
     connection: Connection
     visuals: Visuals
     game: Game
 
-    def __init__(self, config_file: str):
+    def __init__(self, config_file: str, debug: bool = False):
         self.config_file = config_file
+        self.debug = debug
         self.load_config()
 
     def read_config(self) -> dict:

@@ -37,6 +37,7 @@ class PixelAPI(PixelModule):
             description="API endpoint for putting pixels on the canvas",
             version="b0.1",
             docs_url=None,
+            debug=self.config.debug
         )
         self.canvas = canvas
         super().__init__("PixelAPI")
