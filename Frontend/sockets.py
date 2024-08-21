@@ -139,6 +139,9 @@ class SClient:
                         return
                     break
                 arguments = line.split()
+                if "HTTP" in arguments[-1]:
+                    self.disconnect("You're sending HTTP Requests to a Socketserver.")
+                    return
                 if not arguments:
                     self.disconnect()
                     return
@@ -174,7 +177,7 @@ class SClient:
             self.timeout = True
             self.disconnect()
 
-    def disconnect(self) -> None:
+    def disconnect(self, message: str = None) -> None:
         """
         Disconnects the client and closes the socket
         Returns:
@@ -184,15 +187,17 @@ class SClient:
             if self.socket:
                 socket = self.socket
                 if self.timeout:
-                    self.send("Disconnected")
+                    message = "Disconnected"
+                    self.send(message)
                 else:
-                    self.send(
-                        "You were disconnected due to another connection with your IP address."
-                    )
+                    if not message:
+                        message = "You were disconnected due to another connection with your IP address."
+                    self.send(message)
                 socket.close()
                 self.socket = None
                 self.connected = False
-                logger.info(f"Client disconnected: {self.ip}:{self.port}")
+                self.timeout = False
+                logger.info(f"Client disconnected: {self.ip}:{self.port} - {message}")
 
 
 class Socketserver(PixelModule):
