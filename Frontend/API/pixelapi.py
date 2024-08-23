@@ -1,16 +1,84 @@
 import logging
-from typing import Optional
+import random
+from typing import Annotated, Optional
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.params import Depends
 from fastapi.responses import RedirectResponse
+from fastapi.security import OAuth2PasswordRequestForm
+from starlette import status
 
 from Canvas.canvas import Canvas
 from Config.config import Config
+from Frontend.API.admin import AdminAPI
 from Frontend.API.canvas import CanvasAPI
 from Frontend.API.website import WebserviceAPI
+from Misc.security import create_access_token
 from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import logger
+
+LOGIN_CODES = [
+    200,
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207,
+    208,
+    226,
+    300,
+    301,
+    302,
+    303,
+    304,
+    305,
+    306,
+    307,
+    308,
+    400,
+    401,
+    402,
+    403,
+    404,
+    405,
+    406,
+    407,
+    408,
+    409,
+    410,
+    411,
+    412,
+    413,
+    414,
+    415,
+    416,
+    417,
+    418,
+    421,
+    422,
+    423,
+    424,
+    425,
+    426,
+    428,
+    429,
+    431,
+    451,
+    500,
+    501,
+    502,
+    503,
+    504,
+    505,
+    506,
+    507,
+    508,
+    510,
+    511,
+]
 
 
 class PixelAPI(PixelModule):
@@ -27,6 +95,7 @@ class PixelAPI(PixelModule):
     base_api: FastAPI
     web_api: WebserviceAPI
     canvas_api: CanvasAPI
+    admin_api: AdminAPI
     canvas: Canvas
     config: Config
 
@@ -37,11 +106,11 @@ class PixelAPI(PixelModule):
             description="API endpoint for putting pixels on the canvas",
             version="b0.1",
             docs_url=None,
-            debug=self.config.debug
+            debug=self.config.debug,
         )
         self.canvas = canvas
         super().__init__("PixelAPI")
-        self.base_redirect()
+        self.register_routes()
 
         self.web_api = WebserviceAPI(self.base_api, self.config)
         self.base_api.include_router(self.web_api.router)
@@ -49,10 +118,24 @@ class PixelAPI(PixelModule):
         self.canvas_api = CanvasAPI(self.base_api, self.canvas, self.config)
         self.base_api.include_router(self.canvas_api.router)
 
-    def base_redirect(self):
+        self.admin_api = AdminAPI(self.base_api, self.canvas, self.config)
+        self.base_api.include_router(self.admin_api.router)
+
+    def register_routes(self):
         @self.base_api.exception_handler(404)
         def custom_not_found(*args, **kwargs):
-            return RedirectResponse("/docs")
+            return RedirectResponse("/docs?not_found=true")
+
+        @self.base_api.post("/login", status_code=status.HTTP_200_OK)
+        async def login(
+            form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        ):
+            if not (form_data.username == "admin" and form_data.password == "root123"):
+                codes = LOGIN_CODES
+                code = random.choice(codes)
+                raise HTTPException(status_code=code)
+            access_token = create_access_token(form_data.username)
+            return {"access_token": access_token, "token_type": "bearer"}
 
     def loop(self):
         """

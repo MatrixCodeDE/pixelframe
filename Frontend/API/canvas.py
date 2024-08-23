@@ -8,7 +8,8 @@ from PIL import Image
 from Canvas.canvas import Canvas
 from Clients.manager import manager
 from Config.config import Config
-from Misc.utils import cooldown_to_text
+from Misc.errors import InvalidColorFormat
+from Misc.utils import cooldown_to_text, hex_to_rgb
 
 
 class CanvasAPI:
@@ -61,7 +62,7 @@ class CanvasAPI:
             },
             response_class=StreamingResponse,
         )
-        def get_canvas():
+        async def get_canvas():
             """
             # Canvas Image
             Use this to get a webp image of the canvas
@@ -115,30 +116,16 @@ class CanvasAPI:
                     status_code=422, detail="Pixel out of bounds. Try /canvas/size"
                 )
             cd = manager.client(request.client.host).on_cooldown()
-            print(cd, manager.client(request.client.host))
+            # print(cd, manager.client(request.client.host))
             if cd != 0:
                 raise HTTPException(
                     status_code=403, detail=f"On cooldown for {cooldown_to_text(cd)}"
                 )
 
             try:
-                c = int(color, 16)
-                if len(color) == 6:
-                    r = (c & 0xFF0000) >> 16
-                    g = (c & 0x00FF00) >> 8
-                    b = c & 0x0000FF
-                    a = 0xFF
-                elif len(color) == 8:
-                    r = (c & 0xFF000000) >> 24
-                    g = (c & 0x00FF0000) >> 16
-                    b = (c & 0x0000FF00) >> 8
-                    a = c & 0x000000FF
-                else:
-                    raise HTTPException(
-                        status_code=422, detail="Wrong color hex format."
-                    )
+                r, g, b, a = hex_to_rgb(color, True)
             except ValueError:
-                raise HTTPException(status_code=422, detail="Wrong color hex format.")
+                raise InvalidColorFormat()
             self.canvas.add_pixel(x, y, r, g, b, a)
             manager.client(request.client.host).update_cooldown()
 

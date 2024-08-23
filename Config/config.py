@@ -1,6 +1,7 @@
 import json
 import time
 
+from Misc.errors import MalformedConfigError, NoConfigError
 from Misc.utils import NoFrontendException, confirm, logger
 
 
@@ -132,6 +133,17 @@ class Game(object):
         self.godmode = Godmode(**godmode)
 
 
+class Backup(object):
+    enabled: bool
+    interval: int
+    directory: str
+
+    def __init__(self, enabled: bool, interval: int, directory: str):
+        self.enabled = enabled
+        self.interval = interval
+        self.directory = directory
+
+
 class Config(object):
     config_file: str
     debug: bool
@@ -140,6 +152,7 @@ class Config(object):
     connection: Connection
     visuals: Visuals
     game: Game
+    backup: Backup
 
     def __init__(self, config_file: str, debug: bool = False):
         self.config_file = config_file
@@ -159,9 +172,11 @@ class Config(object):
             self.connection = Connection(**conf["connection"])
             self.visuals = Visuals(**conf["visuals"])
             self.game = Game(**conf["game"])
+            self.backup = Backup(**conf["backup"])
         except FileNotFoundError as fe:
-            raise FileNotFoundError(
-                f"The provided Config file was not found: {fe.filename}"
-            )
+            raise NoConfigError(fe.filename)
         except TypeError as te:
-            raise TypeError(f"The provided Config file is malformed: {te.args}")
+            raise MalformedConfigError(te.args)
+
+    def reload(self):
+        self.load_config()

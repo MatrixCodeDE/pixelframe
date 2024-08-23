@@ -9,6 +9,7 @@ class Manager:
         config (Config): The configuration
         clients (dict): A dictionary with all the clients that ever connected to the server
     """
+
     config: Config | None
     clients: dict[str, Client]
 

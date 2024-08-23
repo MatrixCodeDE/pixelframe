@@ -4,6 +4,7 @@ class Stats:
     Attributes:
         pixelstats (dict): A dictionary with the stats
     """
+
     pixelstats: dict[str, int]
 
     def __init__(self):

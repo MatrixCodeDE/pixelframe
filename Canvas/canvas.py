@@ -94,7 +94,6 @@ class Canvas(PixelModule):
     """
 
     config: Config
-    _canvas: Image
     _heart: Heart
     fps: int = 30
     tasks: Queue
@@ -105,7 +104,6 @@ class Canvas(PixelModule):
         Initializes the canvas
         """
         self.config = config
-        self._canvas = Image.new("RGB", self.config.visuals.size.get_size())
         self._heart = Heart(self.config)
         self.tasks = Queue()
         self.stats = statsobj
@@ -250,6 +248,9 @@ class Canvas(PixelModule):
         """
         for pixel in self.tasks:
             self.put_pixel(pixel)
+
+    def restore_from_image(self, image: Image):
+        self._heart.restore_from_image(image)
 
     def get_canvas(self) -> Image:
         """

@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 
@@ -16,6 +16,7 @@ class Status:
         display (bool): If the display is enabled
         socketserver (bool): If the socketserver (netcat) is enabled
     """
+
     config: None
     api: bool
     display: bool
@@ -69,6 +70,7 @@ status = Status()
 
 class NoFrontendException(Exception):
     """Exception if no frontend is enabled"""
+
     def __init__(self):
         super().__init__("You cant disable all frontends!")
 
@@ -109,14 +111,19 @@ def rgb_to_hex(
         return "%02x%02x%02x" % (r, g, b)
 
 
-def hex_to_rgb(hexa: str) -> tuple[int, int, int] | tuple[int, int, int, int] | None:
+def hex_to_rgb(
+    hexa: str, include_alpha: bool = False
+) -> tuple[int, int, int] | tuple[int, int, int, int] | None:
     """Transforms a hexadecimal string to RGB(A)"""
     c = int(hexa, 16)
     if len(hexa) == 6:
         r = (c & 0xFF0000) >> 16
         g = (c & 0x00FF00) >> 8
         b = c & 0x0000FF
-        return r, g, b
+        if include_alpha:
+            return r, g, b, 255
+        else:
+            return r, g, b
     elif len(hexa) == 8:
         r = (c & 0xFF000000) >> 24
         g = (c & 0x00FF0000) >> 16

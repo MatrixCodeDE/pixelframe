@@ -27,6 +27,7 @@ class Display(PixelModule):
         stats (Stats): The stats of the whole canvas (if displayed)
         show_stats (bool): Whether the stats should be shown
     """
+
     config: Config
     canvas: Canvas
     screen: Surface | SurfaceType | None

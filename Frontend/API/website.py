@@ -7,12 +7,16 @@ from Config.config import Config
 from Misc.utils import status
 
 
-def custom_swagger_ui_html(title, favicon):
+def custom_swagger_ui_html(title: str, favicon: str, not_found: bool):
     """
     Returns a custom swagger ui with the navigation bar
     """
     html_content = get_swagger_ui_html(
-        openapi_url="/openapi.json", title=title, swagger_favicon_url=favicon
+        title=title,
+        openapi_url="/openapi.json",
+        swagger_favicon_url=favicon,
+        swagger_css_url="/static/swagger-ui.css",
+        swagger_js_url="/static/swagger-ui-bundle.js",
     )
     html_content_body = html_content.body.decode("utf-8")
     html_content_body = html_content_body.replace(
@@ -54,6 +58,10 @@ def custom_swagger_ui_html(title, favicon):
         """,
         1,
     )
+    if not_found:
+        html_content_body = html_content_body.replace(
+            "</body>", "<script>alert('404 Not Found');</script></body>"
+        )
     return HTMLResponse(content=html_content_body, status_code=html_content.status_code)
 
 
@@ -65,6 +73,7 @@ class WebserviceAPI:
         config (Config): The configuration
         router (APIRouter): The router (sub endpoint) of the API for the web stuff
     """
+
     api: FastAPI
     config: Config
     router: APIRouter
@@ -84,13 +93,18 @@ class WebserviceAPI:
         def get_webservice():
             """
             # Web Service
-            Get the web service for displaying the canvas on your own device
+            Get the web service for displaying the canvas on your own device\n
+            (Redirect to "/web/index.html")
             """
             return RedirectResponse("/web/index.html", status_code=301)
 
-        @self.router.get("/docs", include_in_schema=False)
-        def custom_swagger_ui():
-            return custom_swagger_ui_html(self.api.title, "/static/favicon.ico")
+        @self.router.api_route(
+            "/docs", methods=["GET", "POST", "PUT"], include_in_schema=False
+        )
+        def custom_swagger_ui(not_found: bool = False):
+            return custom_swagger_ui_html(
+                self.api.title, "/static/favicon.ico", not_found
+            )
 
         @self.router.get("/status")
         def get_status():

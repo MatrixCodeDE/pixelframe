@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 
 from Config.config import Config
+from Misc.errors import IncorrectBackupSize
 from Misc.utils import rgb_to_hex, time_to_np
 
 
@@ -127,3 +128,15 @@ class Heart:
         """
         image = Image.fromarray(self.data[:, :, :3])
         return image
+
+    def restore_from_image(self, image: Image) -> None:
+        """
+        Restores the canvas from an image
+        """
+        if image.size != (
+            self.config.visuals.size.width,
+            self.config.visuals.size.height,
+        ):
+            raise IncorrectBackupSize()
+        arr = np.asarray(image)
+        self.data[:, :, :3] = arr

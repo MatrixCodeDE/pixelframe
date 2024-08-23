@@ -1,4 +1,24 @@
 {
+  "backup": {
+    "enabled": false,
+    "interval": 60,
+    "directory": "Backup/files"
+  },
+  "connection": {
+    "host": "0.0.0.0",
+    "ports": {
+      "socket": 1234,
+      "api": 8000
+    },
+    "timeout": 30
+  },
+  "game": {
+    "pps": 30,
+    "godmode": {
+      "enabled": true,
+      "pps": 1000000
+    }
+  },
   "general": {
     "name": "PixelFrame"
   },
@@ -19,14 +39,6 @@
       "force_reload": false
     }
   },
-  "connection": {
-    "host": "0.0.0.0",
-    "ports": {
-      "socket": 1234,
-      "api": 8000
-    },
-    "timeout": 30
-  },
   "visuals": {
     "size": {
       "width": 1920,
@@ -35,13 +47,6 @@
     "statsbar": {
       "enabled": false,
       "size": 30
-    }
-  },
-  "game": {
-    "pps": 30,
-    "godmode": {
-      "enabled": true,
-      "pps": 1000000
     }
   }
 }

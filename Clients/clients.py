@@ -14,6 +14,7 @@ class Client:
         ip (str): The IP address of the client
         god (bool): If the client has godmode allowed (more features)
     """
+
     config: Config
     connected: bool
     pps: float

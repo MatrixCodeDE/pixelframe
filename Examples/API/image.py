@@ -1,6 +1,7 @@
 import time
-from PIL import Image
+
 import requests
+from PIL import Image
 
 host = "0.0.0.0"
 port = 8000
