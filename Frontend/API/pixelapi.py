@@ -5,9 +5,10 @@ from typing import Annotated, Optional
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.params import Depends
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
+from starlette.requests import Request
 
 from Canvas.canvas import Canvas
 from Config.config import Config
@@ -35,7 +36,6 @@ LOGIN_CODES = [
     303,
     304,
     305,
-    306,
     307,
     308,
     400,
@@ -123,8 +123,23 @@ class PixelAPI(PixelModule):
 
     def register_routes(self):
         @self.base_api.exception_handler(404)
-        def custom_not_found(*args, **kwargs):
+        async def custom_not_found(*args, **kwargs):
             return RedirectResponse("/docs?not_found=true")
+
+        @self.base_api.exception_handler(ValueError)
+        async def handle_exception(request: Request, *args, **kwargs):
+            """
+            Important to remove any form of stacktrace left
+            """
+            logger.critical(
+                f"Unhandled exception thrown!\nRequest: {request.__dict__}\nArgs: {args}\nKwargs: {kwargs}"
+            )
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "detail": "Congrats, you've caused an internal error which wasn't designed to be thrown."
+                },
+            )
 
         @self.base_api.post("/login", status_code=status.HTTP_200_OK)
         async def login(
