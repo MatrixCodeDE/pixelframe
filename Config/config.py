@@ -1,5 +1,6 @@
 import json
 import time
+from json import JSONDecodeError
 
 from Misc.errors import MalformedConfigError, NoConfigError
 from Misc.utils import NoFrontendException, confirm, logger
@@ -175,7 +176,7 @@ class Config(object):
             self.backup = Backup(**conf["backup"])
         except FileNotFoundError as fe:
             raise NoConfigError(fe.filename)
-        except TypeError as te:
+        except (TypeError, JSONDecodeError) as te:
             raise MalformedConfigError(te.args)
 
     def reload(self):

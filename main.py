@@ -32,7 +32,7 @@ def main():
         "--debug",
         dest="debugging",
         action="store_true",
-        help="Aktiviert den Debug-Modus."
+        help="Aktiviert den Debug-Modus.",
     )
 
     args = parser.parse_args()

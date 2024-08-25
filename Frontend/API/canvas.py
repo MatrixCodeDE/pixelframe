@@ -90,7 +90,7 @@ class CanvasAPI:
             # User pps
             Returns the amount of pixels a user can place per second
             """
-            return manager.client(request.client.host).pps
+            return manager.client(request.client.host).get_pps()
 
         @self.router.get("/pixel")
         def get_pixel(x: int, y: int) -> str:

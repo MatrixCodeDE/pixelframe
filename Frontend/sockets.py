@@ -91,7 +91,7 @@ class SClient:
         with self.lock:
             if self.socket:
                 try:
-                    self.socket.sendall(("> " + line + "\n").encode())
+                    self.socket.sendall(("  > " + line + "\n").encode())
                 except BrokenPipeError as e:
                     logger.error(e)
 
@@ -134,7 +134,7 @@ class SClient:
                         self.stop()
                         return
                     if not line:
-                        self.disconnect()
+                        self.disconnect("Disconnected.")
                         return
                     break
                 arguments = line.split()
@@ -166,15 +166,14 @@ class SClient:
                             )
 
                 else:
-                    print(f"{self.super_prefix}-%s" % command.upper(), self, *arguments)
+                    # print(f"{self.super_prefix}-%s" % command.upper(), self, *arguments)
                     if not event_handler.trigger(
                         f"{self.super_prefix}-%s" % command.upper(), self, *arguments
                     ):
                         self.send("Wrong arguments")
         finally:
-            self.send("Connection Timeout...")
             self.timeout = True
-            self.disconnect()
+            self.disconnect("Connection Timeout...")
 
     def disconnect(self, message: str = None) -> None:
         """
@@ -185,7 +184,7 @@ class SClient:
         with self.lock:
             if self.socket:
                 socket = self.socket
-                if self.timeout:
+                if self.timeout and not message:
                     message = "Disconnected"
                     self.send(message)
                 else:
@@ -197,6 +196,9 @@ class SClient:
                 self.connected = False
                 self.timeout = False
                 logger.info(f"Client disconnected: {self.ip}:{self.port} - {message}")
+
+    def godmode(self, god: bool):
+        self.mclient.godmode(god)
 
 
 class Socketserver(PixelModule):
@@ -319,13 +321,13 @@ class Socketserver(PixelModule):
         @event_handler.register(f"{self.prefix}-HELP")
         def on_help(client: SClient, *args, **kwargs):
             help = "Commands:\n"
-            help += ">>> HELP\n"
-            help += ">>> STATS\n"
-            help += ">>> SIZE\n"
-            help += ">>> QUIT\n"
-            # help += ">>> TEXT x y text (currently disabled)\n"
-            help += ">>> PX x y [RRGGBB[AA]]\n"
-            help += f"Pixel per second per user: {client.pps}"
+            help += "  >>> HELP\n"
+            help += "  >>> STATS\n"
+            help += "  >>> SIZE\n"
+            help += "  >>> QUIT\n"
+            # help += "  >>> TEXT x y text (currently disabled)\n"
+            help += "  >>> PX x y [RRGGBB[AA]]\n"
+            help += f"  Pixel per second per user: {self.config.game.pps}"
             client.send(help)
 
         @event_handler.register(f"{self.prefix}-STATS")
@@ -353,8 +355,8 @@ class Socketserver(PixelModule):
             @event_handler.register(f"{self.prefix}-GODMODE")
             def on_quit(client: SClient, mode, *args, **kwargs):
                 if mode == "on":
-                    client.set_pps(self.config.game.godmode.pps)
+                    client.godmode(True)
                     client.send("You are now god (%d pps)" % client.pps)
                 else:
-                    client.set_pps(self.config.game.pps)
+                    client.godmode(False)
                     client.send("You are no longer god (%d pps)" % client.pps)

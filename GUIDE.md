@@ -4,8 +4,8 @@ All shown commands/requests and responses are only examples of how the server CO
 
 # Contents
 
-## - [Webinterface](#api-endpoints)
-[]
+- [Webinterface](#api-endpoints)
+- [Sockets](#sockets-todo)
 
 # API Endpoints
 This contains only a few simple examples of how to use the API, for better explanation go to `http://<host>:<port>/docs` for an interactive documentation. Made possible with OpenAPI and FastAPI. There you can also see the standard status codes for the endpoints.
@@ -153,7 +153,7 @@ null
 
 
 
-# Sockets (TODO)
+# Sockets TODO
 Here you can find a few examples for the commands provided by the sockets. Send `HELP` and you'll get all commands available
 
 * `HELP`: Returns a short introductional help text.

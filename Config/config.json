@@ -8,12 +8,12 @@
     "host": "0.0.0.0",
     "ports": {
       "socket": 1234,
-      "api": 8000
+      "api": 8443
     },
     "timeout": 30
   },
   "game": {
-    "pps": 30,
+    "pps": 10,
     "godmode": {
       "enabled": true,
       "pps": 1000000

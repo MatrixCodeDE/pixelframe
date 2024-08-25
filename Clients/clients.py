@@ -17,7 +17,6 @@ class Client:
 
     config: Config
     connected: bool
-    pps: float
     last_update: float
     ip: str
     god: bool
@@ -26,7 +25,6 @@ class Client:
         self.config = config
         self.ip = ip
         self.connected = False
-        self.pps = config.game.pps
         self.last_update = 0
         self.god = False
 
@@ -49,10 +47,6 @@ class Client:
         Toggles godmode for the client
         """
         self.god = god
-        if god:
-            self.pps = self.config.game.godmode.pps
-        else:
-            self.pps = self.config.game.pps
 
     def update_cooldown(self):
         """
@@ -66,7 +60,16 @@ class Client:
         """
         if self.god:
             return 0
-        delta = self.last_update + (1 / self.pps) - time.time()
+        delta = self.last_update + (1 / self.get_pps()) - time.time()
         if delta > 0:
             return delta
         return 0
+
+    def get_pps(self) -> float:
+        """
+        Returns the current pps of the client
+        """
+        if self.god:
+            return self.config.game.godmode.pps
+        else:
+            return self.config.game.pps

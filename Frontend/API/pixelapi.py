@@ -104,7 +104,7 @@ class PixelAPI(PixelModule):
         self.base_api = FastAPI(
             title=f"{self.config.general.name} API",
             description="API endpoint for putting pixels on the canvas",
-            version="b0.1",
+            version="b0.2",
             docs_url=None,
             debug=self.config.debug,
         )
