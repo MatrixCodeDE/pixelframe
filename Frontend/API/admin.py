@@ -1,14 +1,10 @@
-import json
-from json import JSONDecodeError
-from typing import Annotated
-
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI
 from fastapi.params import Depends
-from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
-from Canvas.canvas import Canvas
+from Canvas.canvas import Canvas, Pixel
 from Config.config import Config
+from Frontend.API.models import PixelArray
 from Misc import security
 from Misc.errors import InvalidJSONFormat
 from Misc.utils import hex_to_rgb
@@ -46,20 +42,17 @@ class AdminAPI:
         async def reload():
             self.config.reload()
 
-        @self.router.put("/pixel")
-        async def update_pixel(pixels: str):
+        @self.router.put("/pixel", status_code=status.HTTP_201_CREATED)
+        async def update_pixel(array: PixelArray):
             try:
-                loaded = json.loads(pixels)
-
-                if isinstance(loaded[0], list):  # list or colors
-                    for ctp in loaded:
-                        x, y, c = ctp
-                        r, g, b, a = hex_to_rgb(c, True)
-                        self.canvas.add_pixel(x, y, r, g, b, a)
-                else:
-                    x, y, c = loaded
+                for ctp in array.pixels:
+                    x, y, c = ctp
+                    if not self.canvas.pixel_in_bounds(x, y):
+                        print("error")
+                        continue
                     r, g, b, a = hex_to_rgb(c, True)
-                    self.canvas.add_pixel(x, y, r, g, b, a)
+                    pixel = Pixel(x, y, r, g, b, a)
+                    self.canvas.put_pixel(pixel)
 
-            except (JSONDecodeError, ValueError, TypeError):
+            except (TypeError, TypeError):
                 raise InvalidJSONFormat()

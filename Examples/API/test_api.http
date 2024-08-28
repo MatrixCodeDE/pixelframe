@@ -1,5 +1,5 @@
 @host = localhost
-@port = 8000
+@port = 8443
 
 
 ### Webservice
@@ -36,5 +36,5 @@ PUT http://{{host}}:{{port}}/canvas/pixel?x=1&y=1&color=ff44ff
 Accept: application/json
 
 ### Canvas - Since (GET)
-GET http://{{host}}:{{port}}/canvas/since?timestamp=1715533119
-Accept: application/json
+GET http://{{host}}:{{port}}/canvas/since?timestamp=0
+Accept: application/json, image/webp

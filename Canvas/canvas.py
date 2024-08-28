@@ -1,10 +1,9 @@
 import time
 from collections import deque
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any
 
 from gevent import spawn
 from gevent.time import sleep as gsleep
-from greenlet import GreenletExit
 from PIL import Image
 
 from Canvas.heart import Heart
@@ -88,7 +87,7 @@ class Canvas(PixelModule):
     The canvas object
     Attributes:
         config (Config): The configuration object
-        _canvas (Canvas): The canvas
+        _heart (Heart): The heart of the canvas
         fps (int): The framerate for visual updates
         tasks (Queue): The queue of Pixels
     """
@@ -164,6 +163,24 @@ class Canvas(PixelModule):
             None
         """
         self.tasks.add(Pixel(x, y, r, g, b, a))
+
+    def no_queue_pixel(
+        self, x: int, y: int, r: int, g: int, b: int, a: int = 255
+    ) -> None:
+        """
+        Adds a single pixel directly to the canvas (same as add_pixel but without queue)
+        Args:
+            x (int): Position x
+            y (int): Position y
+            r (int): Value Red
+            g (int): Value Green
+            b (int): Value Blue
+            a (int): Value Alpha
+
+        Returns:
+            None
+        """
+        self.put_pixel(Pixel(x, y, r, g, b, a))
 
     def put_pixel(self, pixel: Pixel):
         """

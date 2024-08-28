@@ -1,7 +1,7 @@
 <div style="display: flex; align-items: center;">
     <img src="https://raw.githubusercontent.com/MatrixCodeDE/pixelframe/main/Misc/icon.svg" width="100" alt="PixelFrame" title="PixelFrame by Matrix">
     <div style="margin-left: 20px; display: flex; align-items: center;">
-        <h1 style="margin: 0;">Pixelframe: Multiplayer canvas</h1>
+        <h1 style="margin: 0;">PixelFrame: Multiplayer canvas</h1>
     </div>
 </div>
 
@@ -63,6 +63,21 @@ source venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
+### Configuration
+<details>
+<summary>Server</summary>
+Take a look at the [config file]()
+</details>
+
+<details>
+<summary>Certificates (HTTPS)</summary>
+
+**This requires NGINX or equal! PixelFrame doesn't support Certificates natively.**\
+If you want to install PixelFrame on a server with Certificates to enable encryption for the API with HTTPS you have to make sure you don't overlap any ports.
+Use port `8443` (or any port with X443) for the API since other ports won't accept encryption. But I recommend to use port `8000` for the base of the API and then map `8080` (HTTP) and/or `8443` (HTTPS) to the base. 
+</details>
+
+
 ### Starting
 
 ```shell
@@ -72,7 +87,7 @@ python3 [-c configfile] pixelframe.py
 ### Contribution
 
 If you want to improve this repository, feel free to contribute. \
-Please comment your changes properly and run the following script before committing:
+Please install `dev-requirement.txt`, comment your changes properly and run the following script before committing:
 
 ```shell
 python3 -m black .

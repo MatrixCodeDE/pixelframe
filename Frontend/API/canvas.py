@@ -4,6 +4,7 @@ from io import BytesIO
 from fastapi import APIRouter, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse, StreamingResponse
 from PIL import Image
+from starlette import status
 
 from Canvas.canvas import Canvas
 from Clients.manager import manager
@@ -76,7 +77,7 @@ class CanvasAPI:
             return resp
 
         @self.router.get("/size")
-        def get_size():
+        async def get_size():
             """
             # Canvas size
             Returns the size of the canvas
@@ -85,7 +86,7 @@ class CanvasAPI:
             return {"x": size[0], "y": size[1]}
 
         @self.router.get("/pps")
-        def get_pps(request: Request):
+        async def get_pps(request: Request):
             """
             # User pps
             Returns the amount of pixels a user can place per second
@@ -93,7 +94,7 @@ class CanvasAPI:
             return manager.client(request.client.host).get_pps()
 
         @self.router.get("/pixel")
-        def get_pixel(x: int, y: int) -> str:
+        async def get_pixel(x: int, y: int) -> str:
             """
             # Pixel color
             Returns the color of a given pixel
@@ -105,8 +106,8 @@ class CanvasAPI:
                 )
             return "%02x%02x%02x" % pixel
 
-        @self.router.put("/pixel", status_code=200)
-        def set_pixel(x: int, y: int, color: str, request: Request):
+        @self.router.put("/pixel", status_code=status.HTTP_201_CREATED)
+        async def set_pixel(x: int, y: int, color: str, request: Request):
             """
             # Set pixel color
             Sets the color of a given pixel
@@ -129,8 +130,8 @@ class CanvasAPI:
             self.canvas.add_pixel(x, y, r, g, b, a)
             manager.client(request.client.host).update_cooldown()
 
-        @self.router.get("/since")
-        def pixel_since(timestamp: int, response: Response):
+        @self.router.get("/since", status_code=status.HTTP_200_OK)
+        async def pixel_since(timestamp: int, response: Response):
             """
             # Canvas changes since timestamp
             Returns all pixels changed since the given UNIX timestamp
@@ -141,5 +142,5 @@ class CanvasAPI:
             out = self.canvas.get_pixel_since(timestamp)
             if out is None:
                 return redirect
-            response.status_code = 200
+            response.status_code = status.HTTP_200_OK
             return out

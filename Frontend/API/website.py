@@ -90,7 +90,7 @@ class WebserviceAPI:
 
     def register_routes(self):
         @self.router.get("/", response_class=HTMLResponse)
-        def get_webservice():
+        async def get_webservice():
             """
             # Web Service
             Get the web service for displaying the canvas on your own device\n
@@ -101,11 +101,11 @@ class WebserviceAPI:
         @self.router.api_route(
             "/docs", methods=["GET", "POST", "PUT"], include_in_schema=False
         )
-        def custom_swagger_ui(not_found: bool = False):
+        async def custom_swagger_ui(not_found: bool = False):
             return custom_swagger_ui_html(
                 self.api.title, "/static/favicon.ico", not_found
             )
 
         @self.router.get("/status")
-        def get_status():
+        async def get_status():
             return status.get_status()
