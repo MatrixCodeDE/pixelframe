@@ -1,1 +1,1 @@
-nohup ./start.sh &
+nohup ./execute.sh &
