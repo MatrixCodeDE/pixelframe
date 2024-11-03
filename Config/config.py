@@ -145,6 +145,17 @@ class Backup(object):
         self.directory = directory
 
 
+class Timelapse(object):
+    enabled: bool
+    interval: int
+    directory: str
+
+    def __init__(self, enabled: bool, interval: int, directory: str):
+        self.enabled = enabled
+        self.interval = interval
+        self.directory = directory
+
+
 class Config(object):
     config_file: str
     debug: bool
@@ -154,6 +165,7 @@ class Config(object):
     visuals: Visuals
     game: Game
     backup: Backup
+    timelapse: Timelapse
 
     def __init__(self, config_file: str, debug: bool = False):
         self.config_file = config_file
@@ -174,6 +186,7 @@ class Config(object):
             self.visuals = Visuals(**conf["visuals"])
             self.game = Game(**conf["game"])
             self.backup = Backup(**conf["backup"])
+            self.timelapse = Timelapse(**conf["timelapse"])
         except FileNotFoundError as fe:
             raise NoConfigError(fe.filename)
         except (TypeError, JSONDecodeError) as te:

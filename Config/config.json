@@ -2,7 +2,7 @@
   "backup": {
     "enabled": false,
     "interval": 60,
-    "directory": "Backup/files"
+    "directory": "Backup/backup_files"
   },
   "connection": {
     "host": "0.0.0.0",
@@ -38,6 +38,11 @@
     "web": {
       "force_reload": false
     }
+  },
+  "timelapse": {
+    "enabled": false,
+    "interval": 60,
+    "directory": "Backup/timelapse_files"
   },
   "visuals": {
     "size": {

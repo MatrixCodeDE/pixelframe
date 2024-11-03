@@ -76,6 +76,20 @@ def main():
         api_loop = spawn(api.loop)
         coroutines.append(api_loop)
 
+    if config.backup.enabled:
+        from Backup.backup import BackupHandler
+
+        backup = BackupHandler(config, canvas)
+        backup_loop = spawn(backup.loop)
+        coroutines.append(backup_loop)
+
+    if config.timelapse.enabled:
+        from Backup.timelapse import TimelapseHandler
+
+        timelapse = TimelapseHandler(config, canvas)
+        timelapse_loop = spawn(timelapse.loop)
+        coroutines.append(timelapse_loop)
+
     logger.info("Starting Processes...")
 
     try:
