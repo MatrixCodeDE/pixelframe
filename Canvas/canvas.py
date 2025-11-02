@@ -2,7 +2,7 @@ import time
 from collections import deque
 from typing import Any
 
-from gevent import spawn
+import numpy as np
 from gevent.time import sleep as gsleep
 from PIL import Image
 
@@ -235,6 +235,9 @@ class Canvas(PixelModule):
         """
         return self.config.visuals.size.get_size()
 
+    def stop_heart(self):
+        pass
+
     def heart_loop(self) -> None:
         """
         The loop for updating the heart's timestamp
@@ -242,7 +245,10 @@ class Canvas(PixelModule):
         logger.info(f"Starting Process: {self.prefix}.heart_loop")
         while self.running:
             self._heart.update_timestamp()
-            gsleep(1)
+            try:
+                gsleep(1)
+            finally:
+                pass
 
     def loop(self) -> None:
         """
@@ -268,6 +274,12 @@ class Canvas(PixelModule):
 
     def restore_from_image(self, image: Image):
         self._heart.restore_from_image(image)
+
+    def restore_from_array(self, array: np.array):
+        self._heart.restore_from_array(array)
+
+    def get_raw_data(self) -> np.ndarray:
+        return self._heart.get_raw_array()
 
     def get_canvas(self) -> Image:
         """

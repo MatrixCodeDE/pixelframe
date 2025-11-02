@@ -8,6 +8,7 @@ from gevent.lock import RLock
 from Canvas.canvas import Canvas
 from Clients.manager import Manager, manager
 from Config.config import Config
+from Misc.errors import SystemStop
 from Misc.eventhandler import event_handler
 from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import logger
@@ -255,6 +256,7 @@ class Socketserver(PixelModule):
         clients = self.clients.values()
         for client in clients:
             client.stop()
+        super().stop()
 
     def loop(self):
         """
@@ -263,20 +265,23 @@ class Socketserver(PixelModule):
         if self.self_disable:
             return
         logger.info(f"Starting Process: {self.prefix}.loop")
-        while self.running:
-            sock, addr = self.socket.accept()
-            ip, port = addr
+        try:
+            while self.running:
+                sock, addr = self.socket.accept()
+                ip, port = addr
 
-            client: SClient = self.clients.get(ip)
-            if client:
-                client.disconnect()
-                client.task.kill()
-            else:
-                client = self.clients[ip] = SClient(
-                    self.canvas, ip, port, self.config.game.pps
-                )
+                client: SClient = self.clients.get(ip)
+                if client:
+                    client.disconnect()
+                    client.task.kill()
+                else:
+                    client = self.clients[ip] = SClient(
+                        self.canvas, ip, port, self.config.game.pps
+                    )
 
-            client.task = spawn(client.connect, sock)
+                client.task = spawn(client.connect, sock)
+        except SystemStop:
+            return
 
     def user_count(self) -> int:
         """

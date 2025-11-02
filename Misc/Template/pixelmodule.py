@@ -12,8 +12,8 @@ class PixelModule:
     prefix: str
     running: bool
 
-    def __init__(self, prefix):
-        self.prefix = prefix
+    def __init__(self, prefix: str):
+        self.prefix = prefix.upper()
         self.running = True
         self.register_events()
 
@@ -27,4 +27,9 @@ class PixelModule:
             self.stop()
 
     def stop(self):
+        """
+        Acts as a kind of 'killswitch' function
+        Returns:
+            None
+        """
         self.running = False

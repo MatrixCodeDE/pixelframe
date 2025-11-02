@@ -21,12 +21,12 @@ credentials_exception = HTTPException(
 
 def create_access_token(user: str):
     """
-    Erstellt nach erfolgreichem Anmelden einen JWT
+    Creates a JWT for the user
     Args:
-        user: Modell Login (siehe models/loginmodels)
+        user: user to login with
 
     Returns:
-        den JWT für den Nutzer
+        the JWT
     """
     encoded = {"sub": user}
     if token_expire_minutes:
@@ -70,5 +70,4 @@ def get_admin(token: Annotated[str, Depends(oauth2_scheme)]):
     Raises:
         HTTPException
     """
-    get_user(token)
-    return True
+    return get_user(token) == "admin"

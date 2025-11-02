@@ -1,4 +1,6 @@
-from fastapi import APIRouter, FastAPI
+import time
+
+from fastapi import APIRouter, BackgroundTasks, FastAPI
 from fastapi.params import Depends
 from starlette import status
 
@@ -7,7 +9,8 @@ from Config.config import Config
 from Frontend.API.models import PixelArray
 from Misc import security
 from Misc.errors import InvalidJSONFormat
-from Misc.utils import hex_to_rgb
+from Misc.eventhandler import event_handler
+from Misc.utils import hex_to_rgb, logger
 
 
 class AdminAPI:
@@ -48,7 +51,6 @@ class AdminAPI:
                 for ctp in array.pixels:
                     x, y, c = ctp
                     if not self.canvas.pixel_in_bounds(x, y):
-                        print("error")
                         continue
                     r, g, b, a = hex_to_rgb(c, True)
                     pixel = Pixel(x, y, r, g, b, a)
@@ -56,3 +58,13 @@ class AdminAPI:
 
             except (TypeError, TypeError):
                 raise InvalidJSONFormat()
+
+        def restarter():
+            time.sleep(0.1)
+            logger.critical("Restarting queued by API\n")
+            time.sleep(0.1)
+            event_handler.trigger("system-restart")
+
+        @self.router.delete("/restart", status_code=status.HTTP_200_OK)
+        async def restart(background_tasks: BackgroundTasks):
+            background_tasks.add_task(restarter)

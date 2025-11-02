@@ -35,7 +35,36 @@
     <div class="spacer"></div>
 
     <div id="canvasContainer">
-        <canvas id="canvas"></canvas>
+        <canvas id="canvas">
+
+        </canvas>
+        <div id="positionPopup" class="activityRequired hidden active"></div>
+        <div id="fullScreenButton" class="activityRequired active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <!--<polygon fill="black" points="0,0 512,0 512,512, 0,512" />
+                <polygon fill="white" points="0,0 150,0 150,30 30,30 30,150 0,150" />
+                <polygon fill="white" points="512,0 512,150 482,150 482,30 362,30 362,0" />
+                <polygon fill="white" points="512,512 362,512 362,482 482,482 482,362 512,362" />
+                <polygon fill="white" points="0,512 0,362 30,362 30,482 150,482 150,512" />-->
+                <!--<polygon fill="black" points="0,0 512,0 512,512, 0,512" />
+                <polygon fill="white" points="120,0 150,0 150,150, 0,150 0,120 120,120" />
+                <polygon fill="white" points="362,0 392,0 392,120 512,120 512,150 362,150" />
+                <polygon fill="white" points="512,362 512,392 392,392 392,512 362,512 362,362" />
+                <polygon fill="white" points="0,362 150,362 150,512 120,512 120,392 0,392" />-->
+                <path id="enableFullscreenSVG" class="fsSVG" d="
+                M0,0 L150,0 L150,30 L30,30 L30,150 L0,150 Z
+                M512,0 L512,150 L482,150 L482,30 L362,30 L362,0 Z
+                M512,512 L362,512 L362,482 L482,482 L482,362 L512,362 Z
+                M0,512 L0,362 L30,362 L30,482 L150,482 L150,512 Z
+                "/>
+                <path id="disableFullscreenSVG" class="fsSVG hidden" d="
+                M120,0 L150,0 L150,150 L0,150 L0,120 L120,120 Z
+                M362,0 L392,0 L392,120 L512,120 L512,150 L362,150 Z
+                M512,362 L512,392 L392,392 L392,512 L362,512 L362,362 Z
+                M0,362 L150,362 L150,512 L120,512 L120,392 L0,392 Z
+                " />
+            </svg>
+        </div>
     </div>
 
     <a id="offlineText" class="hidden"></a>

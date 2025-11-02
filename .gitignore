@@ -2,3 +2,5 @@
 /venv/
 /__pycache__/
 /logfile.log
+/Storage/backup/*.npy
+/Storage/timelapse/*

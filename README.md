@@ -71,9 +71,8 @@ Take a look at the [config file]()
 
 <details>
 <summary>Certificates (HTTPS)</summary>
-
-**This requires NGINX or equal! PixelFrame doesn't support Certificates natively.**\
-If you want to install PixelFrame on a server with Certificates to enable encryption for the API with HTTPS you have to make sure you don't overlap any ports.
+PixelFrame supports Certificates natively (modify via Uvicorn), but I highly recommend nginx.
+If you want to install PixelFrame on a server with nginx and Certificates to enable encryption for the API with HTTPS you have to make sure you don't overlap any ports.
 Use port `8443` (or any port with X443) for the API since other ports won't accept encryption. But I recommend to use port `8000` for the base of the API and then map `8080` (HTTP) and/or `8443` (HTTPS) to the base. 
 </details>
 
@@ -100,6 +99,7 @@ python3 -m isort .
 * [Leon](https://git.leon.wtf/leon/pixelflut) - The `STATS` command
 * [LyonsType](./Misc/OFL.txt) - The font `LT Superior Mono`
 
-## Disclaimer
+## Disclaimer   
 
 > Most of the HTML and JS code if very sketchy and copied together from diverse websites, so there might be some bugs here and there. Contribute if you want to improve it, I'd appreciate it very much!
+> PixelFrame currently uses Greenlets to work with pygame threads. This messes the whole code up by a lot, I might remove pygame in the future to work with asyncio.

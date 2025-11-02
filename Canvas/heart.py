@@ -115,9 +115,6 @@ class Heart:
         ]  # transform from [y, x, color] to [x, y, color]
 
         out = pixels.tolist()
-        # 1 Pixel = 5ms time * 200px = 1s reload time in browser
-        if len(out) > 200:
-            return None
         return out
 
     def create_image(self) -> Image:
@@ -140,3 +137,14 @@ class Heart:
             raise IncorrectBackupSize()
         arr = np.asarray(image)
         self.data[:, :, :3] = arr
+
+    def restore_from_array(self, array: np.ndarray) -> None:
+        if not self.data.shape == array.shape:
+            raise IncorrectBackupSize()
+        self.data = array
+
+    def get_raw_array(self) -> np.ndarray:
+        """
+        Returns the data file
+        """
+        return self.data

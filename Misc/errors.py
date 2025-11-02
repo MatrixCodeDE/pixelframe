@@ -10,8 +10,16 @@ class NoConfigError(Exception):
 
 
 class MalformedConfigError(Exception):
-    def __init__(self, filename: tuple[Any, ...]):
-        super().__init__(f"The provided Config file is malformed: {filename}")
+    def __init__(self, filename: str | tuple[Any, ...], *additional: tuple[str]):
+        if isinstance(filename, tuple):
+            filename = ", ".join(str(filename))
+        base = f"The provided Config file is malformed: {filename}"
+        if additional:
+            base += "\nAdditional information:"
+            for a in additional:
+                base += f"\n  {str(a)}"
+
+        super().__init__(base)
 
 
 class IncorrectBackupSize(Exception):
@@ -35,3 +43,8 @@ class InvalidColorFormat(HTTPException):
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid color (hex) format",
         )
+
+
+class SystemStop(Exception):
+    def __init__(self):
+        super().__init__("Stopping system")

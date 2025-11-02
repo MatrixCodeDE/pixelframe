@@ -47,7 +47,7 @@ class EventHandler:
             **kwargs: Arbitrary keyword arguments
 
         Returns:
-            bool: weather the event was triggered or not
+            bool: whether the event was triggered or not
         """
         if name in self.events:
             try:
@@ -55,8 +55,8 @@ class EventHandler:
                 return True
             except GreenletExit:
                 raise
-            except:
-                logger.exception("Error in callback for %r", name)
+            except Exception as e:
+                logger.exception("Error in callback for %r with %r", name, e)
         return False
 
     def exit(self):

@@ -1,16 +1,17 @@
 import time
 from pathlib import Path
 
+import numpy as np
 from gevent.time import sleep as gsleep
-from PIL import Image
 
 from Canvas.canvas import Canvas
 from Config.config import Config
 from Misc.errors import IncorrectBackupSize
+from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import logger
 
 
-class BackupHandler:
+class BackupHandler(PixelModule):
     config: Config
     canvas: Canvas
     path: Path
@@ -20,8 +21,18 @@ class BackupHandler:
         self.config = config
         self.canvas = canvas
         self.setup()
-        self.restore_backup()
+        try:
+            restored = self.restore_backup()
+            if restored:
+                logger.info("Successfully restored from backup")
+        except FileNotFoundError:
+            logger.warning("No backup found")
+        except ValueError:
+            logger.warning(
+                "Failed to restore from backup: The file seams to be corrupt."
+            )
         self.running = True
+        super().__init__("Backup")
 
     def setup(self):
         base = Path().resolve()
@@ -30,26 +41,29 @@ class BackupHandler:
             self.path.mkdir()
 
     def create_backup(self):
-        img: Image = self.canvas.get_canvas()
-        img = img.convert("RGBA")
-        name = time.strftime("backup_%Y_%m_%d_%H_%M_%S.png", time.gmtime())
-        img.save(self.path / name)
+        data: np.ndarray = self.canvas.get_raw_data()
+        name = time.strftime("backup_%Y_%m_%d_%H_%M_%S.npy", time.gmtime())
+        np.save(self.path / name, data)
 
     def restore_backup(self):
         latest: tuple[time.struct_time, Path | None] = (time.localtime(0), None)
 
         for entry in self.path.iterdir():
             if entry.is_file():
-                t = time.strptime(entry.name, "backup_%Y_%m_%d_%H_%M_%S.png")
+                t = time.strptime(entry.name, "backup_%Y_%m_%d_%H_%M_%S.npy")
                 if t > latest[0]:
                     latest = (t, entry)
 
         if latest[1] is not None:
-            img = Image.open(latest[1]).convert("RGB")
+            arr = np.load(latest[1])
             try:
-                self.canvas.restore_from_image(img)
+                self.canvas.restore_from_array(arr)
             except IncorrectBackupSize:
                 raise IncorrectBackupSize(latest[1])
+        return True
+
+    def stop(self):
+        self.running = False
 
     def loop(self):
         logger.info(f"Starting Process: BACKUP.loop")

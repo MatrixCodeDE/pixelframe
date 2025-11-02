@@ -131,16 +131,16 @@ class CanvasAPI:
             manager.client(request.client.host).update_cooldown()
 
         @self.router.get("/since", status_code=status.HTTP_200_OK)
-        async def pixel_since(timestamp: int, response: Response):
+        async def pixel_since(timestamp: int, response: Response, raw: bool = False):
             """
             # Canvas changes since timestamp
-            Returns all pixels changed since the given UNIX timestamp
+            Returns all pixels changed since the given UNIX timestamp. Use `raw` to get the changed pixels as a json object and avoid redirects on too many changed pixels.
             """
             redirect = RedirectResponse(url="/canvas/")
             if self.config.frontend.web.force_reload:
                 return redirect
             out = self.canvas.get_pixel_since(timestamp)
-            if out is None:
+            if len(out) > 1000 and not raw:
                 return redirect
             response.status_code = status.HTTP_200_OK
             return out

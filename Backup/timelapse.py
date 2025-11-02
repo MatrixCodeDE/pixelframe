@@ -33,6 +33,9 @@ class TimelapseHandler:
         name = time.strftime("image_%Y_%m_%d_%H_%M_%S.png", time.gmtime())
         img.save(self.path / name)
 
+    def stop(self):
+        self.running = False
+
     def loop(self):
         logger.info(f"Starting Process: TIMELAPSE.loop")
 

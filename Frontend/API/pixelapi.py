@@ -1,6 +1,5 @@
-import logging
 import random
-from typing import Annotated, Optional
+from typing import Annotated
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -104,7 +103,7 @@ class PixelAPI(PixelModule):
         self.base_api = FastAPI(
             title=f"{self.config.general.name} API",
             description="API endpoint for putting pixels on the canvas",
-            version="b0.2",
+            version=self.config.general.version,
             docs_url=None,
             debug=self.config.debug,
         )
@@ -148,9 +147,16 @@ class PixelAPI(PixelModule):
             if not (form_data.username == "admin" and form_data.password == "root123"):
                 codes = LOGIN_CODES
                 code = random.choice(codes)
+                # sure this will be removed when switching to a better login
+                logger.warn(
+                    f"Attempted admin login with {form_data.username}:{form_data.password}"
+                )
                 raise HTTPException(status_code=code)
             access_token = create_access_token(form_data.username)
             return {"access_token": access_token, "token_type": "bearer"}
+
+    def stop(self):
+        super().stop()
 
     def loop(self):
         """
@@ -162,5 +168,6 @@ class PixelAPI(PixelModule):
             self.base_api,
             host=self.config.connection.host,
             port=self.config.connection.ports.api,
-            # log_level=logging.WARN,
+            log_level=self.config.logging.loglevel,
+            headers=[("server", self.config.general.name)],
         )

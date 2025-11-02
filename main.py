@@ -1,13 +1,17 @@
 import argparse
+import os
+import sys
 
-import gevent.monkey
+import gevent
+from gevent import monkey, spawn
 
-gevent.monkey.patch_all()
-from gevent import spawn
+monkey.patch_all()
 
 from Canvas.canvas import Canvas
 from Clients.manager import manager as umanager
 from Config.config import Config
+from Misc.errors import SystemStop
+from Misc.eventhandler import event_handler
 from Misc.utils import logger, status
 
 
@@ -51,6 +55,8 @@ def main():
     main_loop = spawn(canvas.loop)
     heart_loop = spawn(canvas.heart_loop)
     coroutines = [main_loop, heart_loop]
+    display_loop = None
+    server_loop = None
 
     if config.frontend.display.enabled:
         from Frontend.display import Display
@@ -68,13 +74,7 @@ def main():
         server_loop = spawn(server.loop)
         coroutines.append(server_loop)
 
-    if config.frontend.api.enabled:
-        from Frontend.API.pixelapi import PixelAPI
-
-        status.update("api", True)
-        api = PixelAPI(canvas, config)
-        api_loop = spawn(api.loop)
-        coroutines.append(api_loop)
+    do_backup = None
 
     if config.backup.enabled:
         from Backup.backup import BackupHandler
@@ -83,6 +83,12 @@ def main():
         backup_loop = spawn(backup.loop)
         coroutines.append(backup_loop)
 
+        def backup_trigger():
+            logger.info("Creating backup...")
+            backup.create_backup()
+
+        do_backup = backup_trigger
+
     if config.timelapse.enabled:
         from Backup.timelapse import TimelapseHandler
 
@@ -90,15 +96,44 @@ def main():
         timelapse_loop = spawn(timelapse.loop)
         coroutines.append(timelapse_loop)
 
+    # this should be the last since greenlet logging gets broken afterwards
+    if config.frontend.api.enabled:
+        from Frontend.API.pixelapi import PixelAPI
+
+        status.update("api", True)
+        api = PixelAPI(canvas, config)
+        api_loop = spawn(api.loop)
+        coroutines.append(api_loop)
+
     logger.info("Starting Processes...")
 
+    def stopper():
+        logger.info("Stopping Processes...")
+        canvas.stop()
+        gevent.killall(
+            coroutines,
+            exception=SystemStop,
+            block=False,
+            timeout=1,
+        )
+        logger.info("Stopped all Processes.")
+
+    @event_handler.register("system-restart")
+    def system_restart():
+        if do_backup:
+            do_backup()
+        logger.info("Stopping Services...")
+        stopper()
+        logger.info("Restarting...\n")
+        os.execv(sys.executable, [sys.executable] + sys.argv)
     try:
-        gevent.joinall(coroutines)
+        coroutines[-1].join() # wait until SIGINT (or system-restart)
     except KeyboardInterrupt:
-        logger.warn("Exitting...")
-    canvas.stop()
-    for coro in coroutines:
-        coro.kill()
+        pass
+
+    logger.critical("Terminating PixelFrame...")
+    stopper()
+    logger.critical("Terminated PixelFrame.")
 
 
 if __name__ == "__main__":

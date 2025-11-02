@@ -1,8 +1,9 @@
 {
   "backup": {
     "enabled": false,
-    "interval": 60,
-    "directory": "Backup/backup_files"
+    "interval": 600,
+    "directory": "Storage/backup",
+    "delete": 1
   },
   "connection": {
     "host": "0.0.0.0",
@@ -20,7 +21,8 @@
     }
   },
   "general": {
-    "name": "PixelFrame"
+    "name": "PixelFrame",
+    "version": "v1.0"
   },
   "frontend": {
     "display": {
@@ -39,10 +41,13 @@
       "force_reload": false
     }
   },
+  "logging": {
+    "level": 2
+  },
   "timelapse": {
     "enabled": false,
     "interval": 60,
-    "directory": "Backup/timelapse_files"
+    "directory": "Storage/timelapse"
   },
   "visuals": {
     "size": {

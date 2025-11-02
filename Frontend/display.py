@@ -9,6 +9,7 @@ from pygame import Surface, SurfaceType
 
 from Canvas.canvas import Canvas
 from Config.config import Config
+from Misc.errors import SystemStop
 from Misc.eventhandler import event_handler
 from Misc.Template.pixelmodule import PixelModule
 from Misc.utils import logger
@@ -68,20 +69,23 @@ class Display(PixelModule):
         logger.info(f"Starting Process: {self.prefix}.loop")
         updates = 1.0 / self.config.frontend.display.fps
 
-        while self.running:
-            start = time.time()
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.type == pygame.QUIT:
-                        event_handler.trigger("stop")
-                        return
-                    elif event.type == pygame.KEYDOWN:
-                        event_handler.trigger("KEYDOWN-" + event.unicode)
+        try:
+            while self.running:
+                start = time.time()
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN:
+                        if event.type == pygame.QUIT:
+                            event_handler.trigger("stop")
+                            return
+                        elif event.type == pygame.KEYDOWN:
+                            event_handler.trigger("KEYDOWN-" + event.unicode)
 
-            self.render()
+                self.render()
 
-            end = time.time() - start
-            gsleep(max(updates - end, 0))
+                end = time.time() - start
+                gsleep(max(updates - end, 0))
+        except SystemStop:
+            return
 
     def render(self):
 
@@ -121,6 +125,6 @@ class Display(PixelModule):
         pygame.display.update()
 
     def stop(self):
-        self.running = False
+        super().stop()
         pygame.mixer.quit()
         pygame.quit()
