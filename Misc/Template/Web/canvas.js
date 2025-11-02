@@ -13,9 +13,9 @@ const inactivityLimit = 5000;
 
 function init(event) {
     if (window.location.port !== ""){
-        host = "http://" + window.location.hostname + ":" + window.location.port;
+        host = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port;
     } else {
-        host = "http://" + window.location.hostname;
+        host = window.location.protocol + "//" + window.location.hostname;
     }
     canvas = document.getElementById("canvas");
     canvasContainer = document.getElementById("canvasContainer");
