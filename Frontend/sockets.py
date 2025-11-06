@@ -66,6 +66,7 @@ class SClient:
         self.ip = ip
         self.port = port
         self.mclient = manager.add_client(self.ip)
+        self.pps = self.mclient.get_pps()
         self.mclient.connect()
         self.socket = None
         self.connected_at = time.time()
@@ -304,7 +305,13 @@ class Socketserver(PixelModule):
         def add_pixel(client: SClient, x, y, color=None, *args, **kwargs):
             x, y = int(x), int(y)
             if color:
-                c = int(color, 16)
+                try:
+                    c = int(color, 16)
+                    if len(color) not in (6, 8):
+                        raise ValueError("Not a valid color")
+                except ValueError:
+                    client.send("PX Invalid color format (RRGGBB[AA])")
+                    return
                 if len(color) == 6:
                     r = (c & 0xFF0000) >> 16
                     g = (c & 0x00FF00) >> 8
@@ -349,7 +356,7 @@ class Socketserver(PixelModule):
 
         @event_handler.register(f"{self.prefix}-PPS")
         def on_pps(client: SClient, *args, **kwargs):
-            client.send("PPS %d" % client.mclient.pps)
+            client.send("PPS %d" % client.mclient.get_pps())
 
         @event_handler.register(f"{self.prefix}-EXIT")
         def on_quit(client: SClient, *args, **kwargs):
